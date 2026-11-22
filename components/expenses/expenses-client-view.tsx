@@ -15,9 +15,14 @@ import { formatINR } from "@/lib/formatters";
 interface ExpensesClientViewProps {
   initialBills: BillRecord[];
   metrics?: ExpenseSummaryMetrics;
+  initialSearch?: string;
 }
 
-export function ExpensesClientView({ initialBills, metrics }: ExpensesClientViewProps) {
+export function ExpensesClientView({
+  initialBills,
+  metrics,
+  initialSearch = "",
+}: ExpensesClientViewProps) {
   const [bills, setBills] = useState<BillRecord[]>(initialBills);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [billToMarkPaid, setBillToMarkPaid] = useState<BillRecord | null>(null);
@@ -117,6 +122,7 @@ export function ExpensesClientView({ initialBills, metrics }: ExpensesClientView
         onMarkPaid={(b) => setBillToMarkPaid(b)}
         onAddExpenseClick={() => setIsAddModalOpen(true)}
         onArchiveBill={handleArchiveBill}
+        initialSearch={initialSearch}
       />
 
       {/* Add Expense Modal */}

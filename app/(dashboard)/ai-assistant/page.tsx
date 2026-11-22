@@ -7,6 +7,8 @@ import { getPaymentPromises } from "@/lib/dal/recovery";
 import { getBills } from "@/lib/dal/bills";
 import { AiAssistantClientView } from "@/components/ai/ai-assistant-client-view";
 
+export const instant = false;
+
 export default async function AiAssistantPage() {
   const { supabase } = await requireUser();
   const context = await getBusinessContext();

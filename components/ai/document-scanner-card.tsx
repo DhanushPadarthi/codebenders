@@ -75,15 +75,121 @@ export function DocumentScannerCard({
   const [paymentAmount, setPaymentAmount] = useState<number>(0);
   const [utrRef, setUtrRef] = useState<string>("");
 
-  // Sample placeholder base64 images (1x1 pixel valid base64 for fast 1-click test)
-  const dummyBase64 =
-    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==";
+  // Helper functions to generate realistic, high-resolution test document images (>= 32x32px)
+  const generateSampleBillImage = (): string => {
+    if (typeof document === "undefined") return "";
+    const canvas = document.createElement("canvas");
+    canvas.width = 440;
+    canvas.height = 360;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return "";
+
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, 440, 360);
+    ctx.strokeStyle = "#cbd5e1";
+    ctx.lineWidth = 2;
+    ctx.strokeRect(10, 10, 420, 340);
+
+    ctx.fillStyle = "#0f172a";
+    ctx.font = "bold 20px sans-serif";
+    ctx.fillText("City Stationery & Printing Works", 25, 45);
+
+    ctx.fillStyle = "#64748b";
+    ctx.font = "12px sans-serif";
+    ctx.fillText("Tax Invoice: BILL-2026-104 • Payment: UPI", 25, 70);
+    ctx.fillText("Date: 2026-11-20", 25, 90);
+    ctx.fillText("Category: Materials", 25, 110);
+
+    ctx.strokeStyle = "#e2e8f0";
+    ctx.beginPath();
+    ctx.moveTo(25, 125);
+    ctx.lineTo(415, 125);
+    ctx.stroke();
+
+    ctx.fillStyle = "#1e293b";
+    ctx.font = "13px sans-serif";
+    ctx.fillText("1. Exam Test Papers printing (50 sets)", 25, 155);
+    ctx.fillText("₹1,250", 355, 155);
+
+    ctx.fillText("2. Question bank photocopies", 25, 185);
+    ctx.fillText("₹600", 368, 185);
+
+    ctx.beginPath();
+    ctx.moveTo(25, 210);
+    ctx.lineTo(415, 210);
+    ctx.stroke();
+
+    ctx.fillStyle = "#0f172a";
+    ctx.font = "bold 16px sans-serif";
+    ctx.fillText("Total Amount:", 25, 245);
+    ctx.fillStyle = "#059669";
+    ctx.fillText("₹1,850", 350, 245);
+
+    ctx.fillStyle = "#64748b";
+    ctx.font = "italic 11px sans-serif";
+    ctx.fillText("Received with thanks • Paid via Google Pay UPI", 25, 290);
+    ctx.fillText("Authorized Signatory: City Stationery", 25, 310);
+
+    return canvas.toDataURL("image/png");
+  };
+
+  const generateSamplePaymentScreenshotImage = (): string => {
+    if (typeof document === "undefined") return "";
+    const canvas = document.createElement("canvas");
+    canvas.width = 380;
+    canvas.height = 420;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return "";
+
+    ctx.fillStyle = "#f8fafc";
+    ctx.fillRect(0, 0, 380, 420);
+
+    ctx.fillStyle = "#1e40af";
+    ctx.fillRect(0, 0, 380, 60);
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "bold 16px sans-serif";
+    ctx.fillText("Google Pay • Payment Successful", 25, 38);
+
+    ctx.fillStyle = "#10b981";
+    ctx.beginPath();
+    ctx.arc(190, 115, 28, 0, 2 * Math.PI);
+    ctx.fill();
+
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "bold 24px sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText("✓", 190, 123);
+
+    ctx.fillStyle = "#0f172a";
+    ctx.font = "bold 28px sans-serif";
+    ctx.fillText("₹6,000.00", 190, 175);
+
+    ctx.fillStyle = "#64748b";
+    ctx.font = "13px sans-serif";
+    ctx.fillText("Paid to: Apex Academy of Sciences", 190, 205);
+    ctx.fillText("Payer: Suresh Nair (Parent of Priya Nair)", 190, 228);
+
+    ctx.textAlign = "left";
+    ctx.strokeStyle = "#cbd5e1";
+    ctx.strokeRect(25, 255, 330, 130);
+
+    ctx.fillStyle = "#334155";
+    ctx.font = "12px sans-serif";
+    ctx.fillText("Payment Details:", 40, 280);
+    ctx.fillText("UTR Reference: 445892103847", 40, 305);
+    ctx.fillText("Payment Mode: Google Pay / UPI", 40, 330);
+    ctx.fillText("Date: 2026-11-20 18:45 IST", 40, 355);
+
+    return canvas.toDataURL("image/png");
+  };
 
   const handleLoadSample = (type: "receipt" | "payment_screenshot") => {
     setScanType(type);
-    setImageBase64(dummyBase64);
+    const dataUrl = type === "receipt" ? generateSampleBillImage() : generateSamplePaymentScreenshotImage();
+    const base64 = dataUrl.includes(",") ? dataUrl.split(",")[1] : "";
+    setImageBase64(base64);
     setImageMime("image/png");
-    setImagePreviewUrl("data:image/png;base64," + dummyBase64);
+    setImagePreviewUrl(dataUrl);
     setFileName(type === "receipt" ? "sample_stationery_bill.png" : "sample_gpay_payment_6000.png");
     setReceiptResult(null);
     setPaymentResult(null);
@@ -486,7 +592,7 @@ export function DocumentScannerCard({
                 {receiptResult.lineItems.map((item, idx) => (
                   <div key={idx} className="flex justify-between text-slate-600">
                     <span>• {item.description}</span>
-                    <span className="font-mono">{formatINR(item.amount)}</span>
+                    <span className="font-mono">{formatINR(item.amount ?? 0)}</span>
                   </div>
                 ))}
               </div>

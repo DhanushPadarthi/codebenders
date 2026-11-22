@@ -1,7 +1,8 @@
 'use server';
 
+import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
-import { requireUser } from '@/lib/auth/require-user';
+import { requireUser, handleActionError } from '@/lib/auth/require-user';
 import { getBusinessContext } from '@/lib/auth/get-business-context';
 import {
   getInvoices,
@@ -44,9 +45,8 @@ export async function getInvoicesAction(options?: {
     const invoices = await getInvoices(supabase, context.business.id, options);
     return { success: true, data: invoices };
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Failed to retrieve invoices.';
-    console.error('getInvoicesAction error:', message);
-    return { success: false, error: message };
+    console.error('getInvoicesAction error:', err);
+    return handleActionError(err, 'Failed to retrieve invoices.');
   }
 }
 
@@ -57,6 +57,10 @@ export async function getInvoiceByIdAction(
   id: string
 ): Promise<ActionResult<InvoiceRecord | null>> {
   try {
+    if (!z.string().uuid().safeParse(id).success) {
+      return { success: false, error: 'Invalid invoice ID format.' };
+    }
+
     const { supabase } = await requireUser();
     const context = await getBusinessContext();
 
@@ -67,9 +71,8 @@ export async function getInvoiceByIdAction(
     const invoice = await getInvoiceById(supabase, context.business.id, id);
     return { success: true, data: invoice };
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Failed to retrieve invoice.';
-    console.error('getInvoiceByIdAction error:', message);
-    return { success: false, error: message };
+    console.error('getInvoiceByIdAction error:', err);
+    return handleActionError(err, 'Failed to retrieve invoice.');
   }
 }
 
@@ -89,9 +92,8 @@ export async function getNextInvoiceNumberAction(): Promise<ActionResult<string>
     const nextNumber = await generateNextInvoiceNumber(supabase, context.business.id, prefix);
     return { success: true, data: nextNumber };
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Failed to generate invoice number.';
-    console.error('getNextInvoiceNumberAction error:', message);
-    return { success: false, error: message };
+    console.error('getNextInvoiceNumberAction error:', err);
+    return handleActionError(err, 'Failed to generate invoice number.');
   }
 }
 
@@ -131,9 +133,8 @@ export async function createInvoiceAction(
 
     return { success: true, data: newInvoice };
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Failed to create invoice.';
-    console.error('createInvoiceAction error:', message);
-    return { success: false, error: message };
+    console.error('createInvoiceAction error:', err);
+    return handleActionError(err, 'Failed to create invoice.');
   }
 }
 
@@ -145,6 +146,10 @@ export async function updateDraftInvoiceAction(
   input: UpdateDraftInvoiceInput
 ): Promise<ActionResult<InvoiceRecord>> {
   try {
+    if (!z.string().uuid().safeParse(id).success) {
+      return { success: false, error: 'Invalid invoice ID format.' };
+    }
+
     const { supabase } = await requireUser();
     const context = await getBusinessContext();
 
@@ -174,9 +179,8 @@ export async function updateDraftInvoiceAction(
 
     return { success: true, data: updated };
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Failed to update invoice.';
-    console.error('updateDraftInvoiceAction error:', message);
-    return { success: false, error: message };
+    console.error('updateDraftInvoiceAction error:', err);
+    return handleActionError(err, 'Failed to update invoice.');
   }
 }
 
@@ -188,6 +192,10 @@ export async function transitionInvoiceStatusAction(
   newStatus: 'sent' | 'cancelled'
 ): Promise<ActionResult<{ status: string; previousStatus: string }>> {
   try {
+    if (!z.string().uuid().safeParse(id).success) {
+      return { success: false, error: 'Invalid invoice ID format.' };
+    }
+
     const { supabase } = await requireUser();
     const context = await getBusinessContext();
 
@@ -202,9 +210,8 @@ export async function transitionInvoiceStatusAction(
 
     return { success: true, data: { status: res.status, previousStatus: res.previousStatus } };
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Failed to transition invoice status.';
-    console.error('transitionInvoiceStatusAction error:', message);
-    return { success: false, error: message };
+    console.error('transitionInvoiceStatusAction error:', err);
+    return handleActionError(err, 'Failed to transition invoice status.');
   }
 }
 
@@ -216,6 +223,10 @@ export async function archiveInvoiceAction(
   id: string
 ): Promise<ActionResult<{ id: string }>> {
   try {
+    if (!z.string().uuid().safeParse(id).success) {
+      return { success: false, error: 'Invalid invoice ID format.' };
+    }
+
     const { supabase } = await requireUser();
     const context = await getBusinessContext();
 
@@ -230,8 +241,7 @@ export async function archiveInvoiceAction(
 
     return { success: true, data: { id } };
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Failed to archive invoice.';
-    console.error('archiveInvoiceAction error:', message);
-    return { success: false, error: message };
+    console.error('archiveInvoiceAction error:', err);
+    return handleActionError(err, 'Failed to archive invoice.');
   }
 }

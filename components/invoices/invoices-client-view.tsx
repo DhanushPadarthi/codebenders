@@ -13,11 +13,13 @@ import type { InvoiceRecord } from "@/lib/dal/invoices";
 interface InvoicesClientViewProps {
   initialInvoices: InvoiceRecord[];
   businessName: string;
+  initialSearch?: string;
 }
 
 export function InvoicesClientView({
   initialInvoices,
   businessName,
+  initialSearch = "",
 }: InvoicesClientViewProps) {
   const [invoices, setInvoices] = useState<InvoiceRecord[]>(initialInvoices);
   const [selectedInvoice, setSelectedInvoice] = useState<InvoiceRecord | null>(null);
@@ -163,6 +165,7 @@ export function InvoicesClientView({
           invoices={invoices}
           onSelectInvoice={(inv) => setSelectedInvoice(inv)}
           onMarkAsSent={handleMarkAsSent}
+          initialSearch={initialSearch}
         />
       </section>
 

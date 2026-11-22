@@ -25,21 +25,21 @@ export function CashflowSummaryCards({ summary, timeframeLabel }: CashflowSummar
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       {/* 1. Opening Cash Balance */}
-      <Card className="border-slate-200 shadow-xs hover:border-slate-300 transition-all bg-white">
+      <Card className="border-slate-200/90 shadow-2xs hover:shadow-md transition-shadow bg-white">
         <CardContent className="p-5">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
               Opening Cash Balance
             </span>
-            <div className="p-2 rounded-lg bg-blue-50 text-blue-600">
-              <Wallet className="w-4 h-4" />
+            <div className="p-2 rounded-xl bg-blue-50 text-blue-600 border border-blue-100">
+              <Wallet className="w-4 h-4 stroke-[2.2]" />
             </div>
           </div>
-          <div className="mt-3">
-            <div className="text-2xl font-bold font-mono text-slate-900">
+          <div className="space-y-1">
+            <div className="text-2xl font-extrabold font-mono text-slate-900 tabular-nums">
               {formatINR(summary.openingBalance)}
             </div>
-            <p className="text-xs text-slate-500 mt-1">
+            <p className="text-xs text-slate-500 font-medium">
               Verified starting cash reserve
             </p>
           </div>
@@ -47,74 +47,74 @@ export function CashflowSummaryCards({ summary, timeframeLabel }: CashflowSummar
       </Card>
 
       {/* 2. Expected Inflows */}
-      <Card className="border-slate-200 shadow-xs hover:border-slate-300 transition-all bg-white">
+      <Card className="border-slate-200/90 shadow-2xs hover:shadow-md transition-shadow bg-white">
         <CardContent className="p-5">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
               {timeframeLabel} Expected Inflows
             </span>
-            <div className="p-2 rounded-lg bg-emerald-50 text-emerald-600">
-              <ArrowDownLeft className="w-4 h-4" />
+            <div className="p-2 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-100">
+              <ArrowDownLeft className="w-4 h-4 stroke-[2.2]" />
             </div>
           </div>
-          <div className="mt-3">
-            <div className="text-2xl font-bold font-mono text-emerald-600">
+          <div className="space-y-1">
+            <div className="text-2xl font-extrabold font-mono text-emerald-600 tabular-nums">
               +{formatINR(summary.totalInflows)}
             </div>
-            <p className="text-xs text-slate-500 mt-1">
-              Tuition receivables, promises & cycles
+            <p className="text-xs text-slate-500 font-medium">
+              Tuition receivables, promises &amp; cycles
             </p>
           </div>
         </CardContent>
       </Card>
 
       {/* 3. Expected Outflows */}
-      <Card className="border-slate-200 shadow-xs hover:border-slate-300 transition-all bg-white">
+      <Card className="border-slate-200/90 shadow-2xs hover:shadow-md transition-shadow bg-white">
         <CardContent className="p-5">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
               {timeframeLabel} Scheduled Outflows
             </span>
-            <div className="p-2 rounded-lg bg-rose-50 text-rose-600">
-              <ArrowUpRight className="w-4 h-4" />
+            <div className="p-2 rounded-xl bg-rose-50 text-rose-600 border border-rose-100">
+              <ArrowUpRight className="w-4 h-4 stroke-[2.2]" />
             </div>
           </div>
-          <div className="mt-3">
-            <div className="text-2xl font-bold font-mono text-rose-600">
+          <div className="space-y-1">
+            <div className="text-2xl font-extrabold font-mono text-rose-600 tabular-nums">
               -{formatINR(summary.totalOutflows)}
             </div>
-            <p className="text-xs text-slate-500 mt-1">
-              Fixed rent, salaries, utilities & bills
+            <p className="text-xs text-slate-500 font-medium">
+              Fixed rent, salaries, utilities &amp; bills
             </p>
           </div>
         </CardContent>
       </Card>
 
       {/* 4. Projected Closing Balance */}
-      <Card className={`border shadow-xs transition-all ${
+      <Card className={`border shadow-2xs hover:shadow-md transition-shadow ${
         summary.hasDeficit
-          ? "border-rose-300 bg-rose-50/20"
+          ? "border-rose-300 bg-rose-50/30"
           : !isClosingHealthy
-          ? "border-amber-300 bg-amber-50/20"
-          : "border-slate-200 bg-white"
+          ? "border-amber-300 bg-amber-50/30"
+          : "border-slate-200/90 bg-white"
       }`}>
         <CardContent className="p-5">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
               Projected Closing Balance
             </span>
-            <div className={`p-2 rounded-lg ${
+            <div className={`p-2 rounded-xl border ${
               summary.hasDeficit
-                ? "bg-rose-100 text-rose-700"
+                ? "bg-rose-100 text-rose-700 border-rose-200"
                 : !isClosingHealthy
-                ? "bg-amber-100 text-amber-700"
-                : "bg-indigo-50 text-indigo-600"
+                ? "bg-amber-100 text-amber-700 border-amber-200"
+                : "bg-indigo-50 text-indigo-600 border-indigo-100"
             }`}>
-              <TrendingUp className="w-4 h-4" />
+              <TrendingUp className="w-4 h-4 stroke-[2.2]" />
             </div>
           </div>
-          <div className="mt-3">
-            <div className={`text-2xl font-bold font-mono ${
+          <div className="space-y-1">
+            <div className={`text-2xl font-extrabold font-mono tabular-nums ${
               summary.hasDeficit
                 ? "text-rose-600"
                 : !isClosingHealthy
@@ -123,20 +123,20 @@ export function CashflowSummaryCards({ summary, timeframeLabel }: CashflowSummar
             }`}>
               {formatINR(summary.projectedClosingBalance)}
             </div>
-            <div className="flex items-center gap-1.5 mt-1 text-xs">
+            <div className="flex items-center gap-1.5 text-xs font-semibold">
               {isLowestHealthy ? (
-                <span className="inline-flex items-center text-emerald-600 font-medium">
-                  <ShieldCheck className="w-3.5 h-3.5 mr-1" />
+                <span className="inline-flex items-center text-emerald-700 tabular-nums">
+                  <ShieldCheck className="w-3.5 h-3.5 mr-1 text-emerald-600" />
                   Buffer safe (Min {formatINR(summary.lowestProjectedBalance)})
                 </span>
               ) : summary.hasDeficit ? (
-                <span className="inline-flex items-center text-rose-600 font-semibold">
+                <span className="inline-flex items-center text-rose-600 font-bold">
                   <AlertTriangle className="w-3.5 h-3.5 mr-1" />
                   Deficit risk on {summary.firstDeficitDate}
                 </span>
               ) : (
-                <span className="inline-flex items-center text-amber-600 font-medium">
-                  <AlertTriangle className="w-3.5 h-3.5 mr-1" />
+                <span className="inline-flex items-center text-amber-700 tabular-nums">
+                  <AlertTriangle className="w-3.5 h-3.5 mr-1 text-amber-600" />
                   Dips to {formatINR(summary.lowestProjectedBalance)}
                 </span>
               )}

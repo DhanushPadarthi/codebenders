@@ -18,6 +18,7 @@ interface PaymentsClientViewProps {
   invoices?: InvoiceRecord[];
   customers?: CustomerRecord[];
   businessName?: string;
+  initialSearch?: string;
 }
 
 export function PaymentsClientView({
@@ -26,6 +27,7 @@ export function PaymentsClientView({
   invoices = [],
   customers = [],
   businessName = "FeePulse Academy",
+  initialSearch = "",
 }: PaymentsClientViewProps) {
   const [payments, setPayments] = useState<PaymentRecord[]>(initialPayments);
   const [isRecordDrawerOpen, setIsRecordDrawerOpen] = useState(false);
@@ -108,6 +110,7 @@ export function PaymentsClientView({
         payments={payments}
         onViewReceipt={(p) => setSelectedReceiptPayment(p)}
         onRecordPaymentClick={() => setIsRecordDrawerOpen(true)}
+        initialSearch={initialSearch}
       />
 
       {/* Record Payment Drawer */}

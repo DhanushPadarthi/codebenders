@@ -1,7 +1,8 @@
 'use server';
 
+import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
-import { requireUser } from '@/lib/auth/require-user';
+import { requireUser, handleActionError } from '@/lib/auth/require-user';
 import { getBusinessContext } from '@/lib/auth/get-business-context';
 import {
   getBills,
@@ -46,9 +47,8 @@ export async function getBillsAction(options?: {
     const bills = await getBills(supabase, context.business.id, options);
     return { success: true, data: bills };
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Failed to retrieve bills.';
-    console.error('getBillsAction error:', message);
-    return { success: false, error: message };
+    console.error('getBillsAction error:', err);
+    return handleActionError(err, 'Failed to retrieve bills.');
   }
 }
 
@@ -57,6 +57,10 @@ export async function getBillsAction(options?: {
  */
 export async function getBillByIdAction(id: string): Promise<ActionResult<BillRecord | null>> {
   try {
+    if (!z.string().uuid().safeParse(id).success) {
+      return { success: false, error: 'Invalid bill ID format.' };
+    }
+
     const { supabase } = await requireUser();
     const context = await getBusinessContext();
 
@@ -67,9 +71,8 @@ export async function getBillByIdAction(id: string): Promise<ActionResult<BillRe
     const bill = await getBillById(supabase, context.business.id, id);
     return { success: true, data: bill };
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Failed to retrieve bill.';
-    console.error('getBillByIdAction error:', message);
-    return { success: false, error: message };
+    console.error('getBillByIdAction error:', err);
+    return handleActionError(err, 'Failed to retrieve bill.');
   }
 }
 
@@ -108,9 +111,8 @@ export async function createBillAction(input: CreateBillInput): Promise<ActionRe
 
     return { success: true, data: bill };
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Failed to record bill.';
-    console.error('createBillAction error:', message);
-    return { success: false, error: message };
+    console.error('createBillAction error:', err);
+    return handleActionError(err, 'Failed to record bill.');
   }
 }
 
@@ -122,6 +124,10 @@ export async function updateBillAction(
   input: UpdateBillInput
 ): Promise<ActionResult<BillRecord>> {
   try {
+    if (!z.string().uuid().safeParse(id).success) {
+      return { success: false, error: 'Invalid bill ID format.' };
+    }
+
     const { supabase } = await requireUser();
     const context = await getBusinessContext();
 
@@ -131,7 +137,17 @@ export async function updateBillAction(
 
     const validation = UpdateBillSchema.safeParse(input);
     if (!validation.success) {
-      return { success: false, error: 'Validation failed on bill update.' };
+      const fieldErrors: Record<string, string[]> = {};
+      for (const issue of validation.error.issues) {
+        const field = issue.path.join('.');
+        fieldErrors[field] = fieldErrors[field] || [];
+        fieldErrors[field].push(issue.message);
+      }
+      return {
+        success: false,
+        error: 'Validation failed on bill update.',
+        details: fieldErrors,
+      };
     }
 
     const bill = await updateBill(supabase, context.business.id, id, validation.data);
@@ -142,9 +158,8 @@ export async function updateBillAction(
 
     return { success: true, data: bill };
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Failed to update bill.';
-    console.error('updateBillAction error:', message);
-    return { success: false, error: message };
+    console.error('updateBillAction error:', err);
+    return handleActionError(err, 'Failed to update bill.');
   }
 }
 
@@ -156,6 +171,10 @@ export async function markBillPaidAction(
   input: MarkBillPaidInput
 ): Promise<ActionResult<BillRecord>> {
   try {
+    if (!z.string().uuid().safeParse(id).success) {
+      return { success: false, error: 'Invalid bill ID format.' };
+    }
+
     const { supabase } = await requireUser();
     const context = await getBusinessContext();
 
@@ -165,7 +184,17 @@ export async function markBillPaidAction(
 
     const validation = MarkBillPaidSchema.safeParse(input);
     if (!validation.success) {
-      return { success: false, error: 'Invalid settlement data.' };
+      const fieldErrors: Record<string, string[]> = {};
+      for (const issue of validation.error.issues) {
+        const field = issue.path.join('.');
+        fieldErrors[field] = fieldErrors[field] || [];
+        fieldErrors[field].push(issue.message);
+      }
+      return {
+        success: false,
+        error: 'Invalid settlement data. Please verify payment amount, date, and method.',
+        details: fieldErrors,
+      };
     }
 
     const bill = await markBillAsPaid(supabase, context.business.id, id, validation.data);
@@ -176,9 +205,8 @@ export async function markBillPaidAction(
 
     return { success: true, data: bill };
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Failed to record bill settlement.';
-    console.error('markBillPaidAction error:', message);
-    return { success: false, error: message };
+    console.error('markBillPaidAction error:', err);
+    return handleActionError(err, 'Failed to record bill settlement.');
   }
 }
 
@@ -187,6 +215,10 @@ export async function markBillPaidAction(
  */
 export async function archiveBillAction(id: string): Promise<ActionResult<boolean>> {
   try {
+    if (!z.string().uuid().safeParse(id).success) {
+      return { success: false, error: 'Invalid bill ID format.' };
+    }
+
     const { supabase } = await requireUser();
     const context = await getBusinessContext();
 
@@ -202,18 +234,15 @@ export async function archiveBillAction(id: string): Promise<ActionResult<boolea
 
     return { success: true, data: success };
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Failed to archive bill.';
-    console.error('archiveBillAction error:', message);
-    return { success: false, error: message };
+    console.error('archiveBillAction error:', err);
+    return handleActionError(err, 'Failed to archive bill.');
   }
 }
 
 /**
- * Server Action: Calculates expense summary metrics in integer paise.
+ * Server Action: Fetches aggregate operating overhead metrics.
  */
-export async function getExpenseSummaryAction(
-  asOfDate?: string
-): Promise<ActionResult<ExpenseSummaryMetrics>> {
+export async function getExpenseSummaryAction(): Promise<ActionResult<ExpenseSummaryMetrics>> {
   try {
     const { supabase } = await requireUser();
     const context = await getBusinessContext();
@@ -222,11 +251,10 @@ export async function getExpenseSummaryAction(
       return { success: false, error: 'No active business profile found for this account.' };
     }
 
-    const metrics = await getExpenseSummaryMetrics(supabase, context.business.id, asOfDate);
+    const metrics = await getExpenseSummaryMetrics(supabase, context.business.id);
     return { success: true, data: metrics };
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Failed to compute expense metrics.';
-    console.error('getExpenseSummaryAction error:', message);
-    return { success: false, error: message };
+    console.error('getExpenseSummaryAction error:', err);
+    return handleActionError(err, 'Failed to compute expense metrics.');
   }
 }

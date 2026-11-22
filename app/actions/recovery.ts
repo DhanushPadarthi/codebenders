@@ -1,7 +1,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { requireUser } from '@/lib/auth/require-user';
+import { requireUser, handleActionError } from '@/lib/auth/require-user';
 import { getBusinessContext } from '@/lib/auth/get-business-context';
 import {
   getRecoveryQueueData,
@@ -49,9 +49,8 @@ export async function getRecoveryQueueAction(
     const data = await getRecoveryQueueData(supabase, context.business.id, asOfDate);
     return { success: true, data };
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Failed to retrieve recovery queue data.';
-    console.error('getRecoveryQueueAction error:', message);
-    return { success: false, error: message };
+    console.error('getRecoveryQueueAction error:', err);
+    return handleActionError(err, 'Failed to retrieve recovery queue data.');
   }
 }
 
@@ -88,9 +87,8 @@ export async function createPaymentPromiseAction(
 
     return { success: true, data: record };
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Failed to create payment promise.';
-    console.error('createPaymentPromiseAction error:', message);
-    return { success: false, error: message };
+    console.error('createPaymentPromiseAction error:', err);
+    return handleActionError(err, 'Failed to create payment promise.');
   }
 }
 
@@ -110,7 +108,13 @@ export async function updatePaymentPromiseStatusAction(
 
     const validation = UpdatePaymentPromiseSchema.safeParse(input);
     if (!validation.success) {
-      return { success: false, error: 'Invalid update parameters.' };
+      const details: Record<string, string[]> = {};
+      validation.error.errors.forEach((err) => {
+        const field = err.path.join('.');
+        details[field] = details[field] || [];
+        details[field].push(err.message);
+      });
+      return { success: false, error: 'Invalid update parameters.', details };
     }
 
     const record = await updatePaymentPromiseStatus(
@@ -125,9 +129,8 @@ export async function updatePaymentPromiseStatusAction(
 
     return { success: true, data: record };
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Failed to update promise status.';
-    console.error('updatePaymentPromiseStatusAction error:', message);
-    return { success: false, error: message };
+    console.error('updatePaymentPromiseStatusAction error:', err);
+    return handleActionError(err, 'Failed to update promise status.');
   }
 }
 
@@ -162,9 +165,8 @@ export async function createFollowUpTaskAction(
 
     return { success: true, data: record };
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Failed to log follow-up activity.';
-    console.error('createFollowUpTaskAction error:', message);
-    return { success: false, error: message };
+    console.error('createFollowUpTaskAction error:', err);
+    return handleActionError(err, 'Failed to log follow-up activity.');
   }
 }
 
@@ -184,7 +186,13 @@ export async function updateFollowUpTaskStatusAction(
 
     const validation = UpdateFollowUpTaskSchema.safeParse(input);
     if (!validation.success) {
-      return { success: false, error: 'Invalid update parameters.' };
+      const details: Record<string, string[]> = {};
+      validation.error.errors.forEach((err) => {
+        const field = err.path.join('.');
+        details[field] = details[field] || [];
+        details[field].push(err.message);
+      });
+      return { success: false, error: 'Invalid update parameters.', details };
     }
 
     const record = await updateFollowUpTaskStatus(
@@ -198,9 +206,8 @@ export async function updateFollowUpTaskStatusAction(
 
     return { success: true, data: record };
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Failed to update follow-up task.';
-    console.error('updateFollowUpTaskStatusAction error:', message);
-    return { success: false, error: message };
+    console.error('updateFollowUpTaskStatusAction error:', err);
+    return handleActionError(err, 'Failed to update follow-up task.');
   }
 }
 
@@ -222,7 +229,13 @@ export async function recordRecoveryPaymentAction(
 
     const validation = RecordPaymentSchema.safeParse(paymentInput);
     if (!validation.success) {
-      return { success: false, error: 'Invalid payment parameters.' };
+      const details: Record<string, string[]> = {};
+      validation.error.errors.forEach((err) => {
+        const field = err.path.join('.');
+        details[field] = details[field] || [];
+        details[field].push(err.message);
+      });
+      return { success: false, error: 'Invalid payment parameters.', details };
     }
 
     // 1. Execute payment through secure RPC
@@ -251,8 +264,7 @@ export async function recordRecoveryPaymentAction(
           try {
             await updatePaymentPromiseStatus(supabase, context.business.id, p.id, 'fulfilled');
           } catch {
-            // If the promise is for a higher amount than was paid (partial payment),
-            // updatePaymentPromiseStatus will cleanly reject and leave the promise as pending.
+            // Partial payment: updatePaymentPromiseStatus will cleanly reject and leave promise pending
           }
         }
       }
@@ -267,8 +279,7 @@ export async function recordRecoveryPaymentAction(
 
     return { success: true, data: result };
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Failed to record recovery payment.';
-    console.error('recordRecoveryPaymentAction error:', message);
-    return { success: false, error: message };
+    console.error('recordRecoveryPaymentAction error:', err);
+    return handleActionError(err, 'Failed to record recovery payment.');
   }
 }

@@ -1,6 +1,6 @@
--- Forward-Only Migration Proposal: 20261122000004_atomic_invoice_creation.sql
+-- Forward-Only Migration: 20261122000009_atomic_invoice_creation.sql
 -- Description: Transactional RPC for atomic invoice creation with line items
--- Status: PROPOSED ONLY (Requires explicit user review and approval before execution)
+-- Status: PROPOSED FORWARD MIGRATION (Requires explicit user review and approval before remote apply)
 -- Target Project: FeePulse Staging (eyauiehyiipqkvfjecnx)
 
 -- Function: public.create_invoice_with_items
@@ -12,7 +12,8 @@ CREATE OR REPLACE FUNCTION public.create_invoice_with_items(
     p_due_date DATE,
     p_discount NUMERIC(12,2) DEFAULT 0.00,
     p_notes TEXT DEFAULT NULL,
-    p_items JSONB DEFAULT '[]'::JSONB
+    p_items JSONB DEFAULT '[]'::JSONB,
+    p_status TEXT DEFAULT 'draft'
 )
 RETURNS JSONB AS $$
 DECLARE
@@ -64,7 +65,12 @@ BEGIN
         RAISE EXCEPTION 'Invoice must contain at least one line item.';
     END IF;
 
-    -- 7. Insert draft invoice header
+    -- 6b. Validate initial status
+    IF p_status NOT IN ('draft', 'sent') THEN
+        RAISE EXCEPTION 'Initial invoice status must be draft or sent (received: %).', p_status;
+    END IF;
+
+    -- 7. Insert draft invoice header (must be draft so line items immutability trigger permits item inserts)
     INSERT INTO public.invoices (
         business_id,
         customer_id,
@@ -128,6 +134,13 @@ BEGIN
     END LOOP;
 
     -- Trigger trg_invoice_items_sync automatically calls recalculate_invoice_items_total()
+    -- 9. If final requested status is 'sent', transition atomically within this transaction
+    IF p_status = 'sent' THEN
+        UPDATE public.invoices
+        SET status = 'sent'
+        WHERE id = v_invoice_id;
+    END IF;
+
     -- Read back finalized totals
     SELECT subtotal, total_amount INTO v_subtotal, v_total_amount
     FROM public.invoices
@@ -139,10 +152,11 @@ BEGIN
         'invoice_number', p_invoice_number,
         'subtotal', v_subtotal,
         'discount', p_discount,
-        'total_amount', v_total_amount
+        'total_amount', v_total_amount,
+        'status', p_status
     );
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = '';
 
-REVOKE ALL ON FUNCTION public.create_invoice_with_items(UUID, TEXT, DATE, DATE, NUMERIC, TEXT, JSONB) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION public.create_invoice_with_items(UUID, TEXT, DATE, DATE, NUMERIC, TEXT, JSONB) TO authenticated;
+REVOKE ALL ON FUNCTION public.create_invoice_with_items(UUID, TEXT, DATE, DATE, NUMERIC, TEXT, JSONB, TEXT) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.create_invoice_with_items(UUID, TEXT, DATE, DATE, NUMERIC, TEXT, JSONB, TEXT) TO authenticated;

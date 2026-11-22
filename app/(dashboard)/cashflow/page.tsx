@@ -3,8 +3,6 @@ import { getBusinessContext } from "@/lib/auth/get-business-context";
 import { getAggregatedCashflowState } from "@/lib/dal/cashflow";
 import { CashflowClientView } from "@/components/cashflow/cashflow-client-view";
 
-export const instant = false;
-
 export default async function CashflowPage() {
   const { supabase } = await requireUser();
   const context = await getBusinessContext();

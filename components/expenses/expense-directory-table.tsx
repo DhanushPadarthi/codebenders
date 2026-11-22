@@ -24,6 +24,7 @@ interface ExpenseDirectoryTableProps {
   onMarkPaid: (bill: BillRecord) => void;
   onAddExpenseClick: () => void;
   onArchiveBill?: (bill: BillRecord) => void;
+  initialSearch?: string;
 }
 
 type ExpenseTab = "ALL" | "UPCOMING" | "OVERDUE" | "PAID";
@@ -34,11 +35,20 @@ export function ExpenseDirectoryTable({
   onMarkPaid,
   onAddExpenseClick,
   onArchiveBill,
+  initialSearch = "",
 }: ExpenseDirectoryTableProps) {
   const [activeTab, setActiveTab] = useState<ExpenseTab>("ALL");
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState(initialSearch);
   const [selectedCategory, setSelectedCategory] = useState<string>("ALL");
   const [sortOption, setSortOption] = useState<SortOption>("DUE_ASC");
+  const [prevInitialSearch, setPrevInitialSearch] = useState(initialSearch);
+
+  if (initialSearch !== prevInitialSearch) {
+    setPrevInitialSearch(initialSearch);
+    if (initialSearch) {
+      setSearchQuery(initialSearch);
+    }
+  }
 
   const [todayStr] = useState(() => new Date().toISOString().slice(0, 10));
 
@@ -119,16 +129,56 @@ export function ExpenseDirectoryTable({
   const hasActiveFilters =
     searchQuery.trim() !== "" || selectedCategory !== "ALL" || activeTab !== "ALL";
 
+  const getCategoryBadge = (category: string) => {
+    switch (category.toLowerCase()) {
+      case "rent":
+      case "coaching centre rent":
+        return (
+          <Badge variant="purple" className="text-[10px] font-semibold">
+            Rent
+          </Badge>
+        );
+      case "salaries":
+      case "teacher honorarium":
+      case "faculty honorarium":
+        return (
+          <Badge variant="info" className="text-[10px] font-semibold">
+            Staff / Honorarium
+          </Badge>
+        );
+      case "utilities":
+      case "electricity & wifi":
+        return (
+          <Badge variant="warning" className="text-[10px] font-semibold">
+            Utilities
+          </Badge>
+        );
+      case "study materials":
+      case "printing & stationery":
+        return (
+          <Badge variant="success" className="text-[10px] font-semibold">
+            Materials
+          </Badge>
+        );
+      default:
+        return (
+          <Badge variant="secondary" className="text-[10px] font-semibold">
+            {category}
+          </Badge>
+        );
+    }
+  };
+
   return (
     <div className="space-y-4">
       {/* Tab Navigation Strip */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-3">
-        <div className="flex items-center gap-1.5 p-1 bg-slate-100 rounded-xl">
+        <div className="flex items-center gap-1.5 p-1 bg-slate-100 rounded-xl font-semibold text-xs">
           <button
             onClick={() => setActiveTab("ALL")}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+            className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
               activeTab === "ALL"
-                ? "bg-white text-slate-900 shadow-2xs"
+                ? "bg-white text-slate-900 shadow-2xs font-bold"
                 : "text-slate-600 hover:text-slate-900"
             }`}
           >
@@ -137,21 +187,21 @@ export function ExpenseDirectoryTable({
 
           <button
             onClick={() => setActiveTab("UPCOMING")}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+            className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
               activeTab === "UPCOMING"
-                ? "bg-white text-indigo-700 shadow-2xs"
+                ? "bg-white text-indigo-700 shadow-2xs font-bold"
                 : "text-slate-600 hover:text-slate-900"
             }`}
           >
-            Upcoming & Due ({tabCounts.upcoming})
+            Upcoming ({tabCounts.upcoming})
           </button>
 
           <button
             onClick={() => setActiveTab("OVERDUE")}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+            className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
               activeTab === "OVERDUE"
-                ? "bg-white text-rose-700 shadow-2xs"
-                : "text-slate-600 hover:text-rose-700"
+                ? "bg-white text-rose-700 shadow-2xs font-bold"
+                : "text-slate-600 hover:text-slate-900"
             }`}
           >
             Overdue ({tabCounts.overdue})
@@ -159,55 +209,47 @@ export function ExpenseDirectoryTable({
 
           <button
             onClick={() => setActiveTab("PAID")}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+            className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
               activeTab === "PAID"
-                ? "bg-white text-emerald-700 shadow-2xs"
-                : "text-slate-600 hover:text-emerald-700"
+                ? "bg-white text-emerald-800 shadow-2xs font-bold"
+                : "text-slate-600 hover:text-slate-900"
             }`}
           >
-            Paid & Settled ({tabCounts.paid})
+            Settled ({tabCounts.paid})
           </button>
         </div>
 
-        <div className="flex items-center gap-2">
-          <Button
-            onClick={onAddExpenseClick}
-            size="sm"
-            className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs gap-1.5 shadow-2xs"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            <span>Add Expense</span>
-          </Button>
-        </div>
+        <Button
+          onClick={onAddExpenseClick}
+          size="sm"
+          className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold gap-1.5 shadow-xs"
+        >
+          <Plus className="w-4 h-4 stroke-[2.5]" />
+          <span>Add Expense</span>
+        </Button>
       </div>
 
-      {/* Filter and Search Bar */}
-      <div className="p-4 bg-white rounded-xl border border-slate-200/90 shadow-2xs flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
-        <div className="relative flex-1">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
+      {/* Search & Filter Bar */}
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 bg-white p-4 rounded-2xl border border-slate-200/90 shadow-2xs">
+        {/* Search */}
+        <div className="relative flex-1 max-w-md">
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
           <input
             type="text"
+            placeholder="Search by bill title, vendor name, or remarks..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search by expense title, payee vendor, or reference..."
-            className="w-full pl-9 pr-8 py-2 text-xs border border-slate-200 rounded-lg bg-slate-50/50 text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 placeholder:text-slate-400 font-medium"
+            className="w-full text-xs rounded-xl border border-slate-200/90 bg-slate-50/50 pl-10 pr-3.5 py-2.5 text-slate-900 placeholder:text-slate-400 focus:outline-hidden focus:ring-2 focus:ring-slate-900 focus:bg-white transition-all font-medium"
           />
-          {searchQuery && (
-            <button
-              onClick={() => setSearchQuery("")}
-              className="absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-600"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          )}
         </div>
 
-        <div className="flex items-center gap-2">
-          {/* Category Dropdown */}
+        {/* Category & Sort controls */}
+        <div className="flex items-center gap-2 flex-wrap text-xs">
+          {/* Category Filter */}
           <select
             value={selectedCategory}
             onChange={(e) => setSelectedCategory(e.target.value)}
-            className="text-xs px-2.5 py-2 border border-slate-200 rounded-lg bg-white text-slate-700 font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
+            className="text-xs rounded-xl border border-slate-200/90 bg-white px-3 py-2 text-slate-700 focus:outline-hidden focus:ring-2 focus:ring-slate-900 font-semibold cursor-pointer shadow-2xs"
           >
             <option value="ALL">All Categories</option>
             {EXPENSE_CATEGORIES.map((cat) => (
@@ -217,157 +259,172 @@ export function ExpenseDirectoryTable({
             ))}
           </select>
 
-          {/* Sort Dropdown */}
+          {/* Sort By */}
           <select
             value={sortOption}
             onChange={(e) => setSortOption(e.target.value as SortOption)}
-            className="text-xs px-2.5 py-2 border border-slate-200 rounded-lg bg-white text-slate-700 font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
+            className="text-xs rounded-xl border border-slate-200/90 bg-white px-3 py-2 text-slate-700 focus:outline-hidden focus:ring-2 focus:ring-slate-900 font-semibold cursor-pointer shadow-2xs"
           >
-            <option value="DUE_ASC">Due Date (Earliest)</option>
-            <option value="DUE_DESC">Due Date (Latest)</option>
-            <option value="AMOUNT_DESC">Amount (Highest)</option>
-            <option value="AMOUNT_ASC">Amount (Lowest)</option>
+            <option value="DUE_ASC">Due Date (Earliest First)</option>
+            <option value="DUE_DESC">Due Date (Latest First)</option>
+            <option value="AMOUNT_DESC">Amount (High to Low)</option>
+            <option value="AMOUNT_ASC">Amount (Low to High)</option>
           </select>
+
+          {hasActiveFilters && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={clearFilters}
+              className="h-8 px-2.5 text-xs text-slate-500 hover:text-slate-900 gap-1 font-semibold"
+            >
+              <X className="w-3.5 h-3.5" />
+              <span>Reset</span>
+            </Button>
+          )}
         </div>
       </div>
 
       {/* Directory Table */}
-      <div className="rounded-xl border border-slate-200/90 bg-white shadow-2xs overflow-hidden">
+      <div className="rounded-2xl border border-slate-200/90 overflow-hidden bg-white shadow-2xs">
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse text-xs">
-            <thead>
-              <tr className="border-b border-slate-200 bg-slate-50/70 text-slate-500 font-bold uppercase tracking-wider text-[10.5px]">
-                <th className="py-3 px-4">Expense Description</th>
-                <th className="py-3 px-4">Payee / Vendor</th>
+          <table className="w-full text-left text-xs text-slate-600">
+            <thead className="bg-slate-50/80 text-slate-500 font-bold border-b border-slate-200 uppercase tracking-wider text-[11px]">
+              <tr>
+                <th className="py-3 px-4">Title &amp; Vendor</th>
                 <th className="py-3 px-4">Category</th>
-                <th className="py-3 px-4 text-right">Amount (₹)</th>
                 <th className="py-3 px-4">Due Date</th>
-                <th className="py-3 px-4">Recurrence</th>
+                <th className="py-3 px-4 text-right">Amount</th>
                 <th className="py-3 px-4">Status</th>
-                <th className="py-3 px-4">Settlement Details</th>
                 <th className="py-3 px-4 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 text-slate-700">
-              {filteredBills.length > 0 ? (
-                filteredBills.map((bill) => {
-                  const isPaid = bill.status === "paid";
-                  const isOverdue = !isPaid && (bill.status === "overdue" || bill.dueDate < todayStr);
+            <tbody className="divide-y divide-slate-100">
+              {filteredBills.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="py-16 px-4 text-center">
+                    <div className="max-w-md mx-auto space-y-3">
+                      <div className="w-12 h-12 rounded-2xl bg-slate-100 text-slate-400 mx-auto flex items-center justify-center">
+                        <Building className="w-6 h-6" />
+                      </div>
+                      <h4 className="text-base font-bold text-slate-900">
+                        {hasActiveFilters ? "No matching expense records" : "No operational expenses found"}
+                      </h4>
+                      <p className="text-xs text-slate-500 leading-relaxed font-medium">
+                        {hasActiveFilters
+                          ? "Try clearing your filters or selecting a different category."
+                          : "Track rent, teacher salaries, and utility bills. FeePulse incorporates these overheads into your 30-day runway forecast."}
+                      </p>
+                      <div className="pt-2">
+                        {hasActiveFilters ? (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={clearFilters}
+                            className="text-xs font-semibold"
+                          >
+                            Reset Filters
+                          </Button>
+                        ) : (
+                          <Button
+                            onClick={onAddExpenseClick}
+                            size="sm"
+                            className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold gap-1.5 shadow-xs"
+                          >
+                            <Plus className="w-4 h-4" />
+                            <span>Add First Expense</span>
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+              ) : (
+                filteredBills.map((b) => {
+                  const isOverdue =
+                    b.status === "overdue" || (b.status !== "paid" && b.dueDate < todayStr);
 
                   return (
-                    <tr
-                      key={bill.id}
-                      className="hover:bg-slate-50/80 transition-colors group"
-                    >
-                      {/* Description */}
-                      <td className="py-3 px-4">
-                        <div className="font-bold text-slate-900 flex items-center gap-1.5">
-                          <span>{bill.title}</span>
+                    <tr key={b.id} className="hover:bg-slate-50/80 transition-colors group">
+                      {/* Title & Vendor */}
+                      <td className="py-3.5 px-4">
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-slate-900 block group-hover:text-indigo-600 transition-colors">
+                            {b.title}
+                          </span>
+                          {b.isRecurring && (
+                            <span
+                              title={`Recurring: ${b.recurringFrequency || "Monthly"}`}
+                              className="text-slate-400 hover:text-slate-600"
+                            >
+                              <RefreshCw className="w-3.5 h-3.5" />
+                            </span>
+                          )}
                         </div>
-                        {bill.notes && (
-                          <div className="text-[11px] text-slate-500 truncate max-w-xs italic">
-                            {bill.notes}
-                          </div>
-                        )}
+                        <span className="text-[11px] text-slate-500 font-medium">
+                          Vendor: {b.vendorName || "Operational"}
+                        </span>
                       </td>
 
-                      {/* Payee / Vendor */}
-                      <td className="py-3 px-4 font-medium text-slate-800">
-                        {bill.vendorName}
-                      </td>
+                      {/* Category */}
+                      <td className="py-3.5 px-4">{getCategoryBadge(b.category)}</td>
 
-                      {/* Category Pill */}
-                      <td className="py-3 px-4">
-                        <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-slate-100 text-slate-700 border border-slate-200">
-                          {bill.uiCategory}
+                      {/* Due Date */}
+                      <td className="py-3.5 px-4 tabular-nums">
+                        <span
+                          className={
+                            isOverdue
+                              ? "font-bold text-rose-600"
+                              : "text-slate-600 font-medium"
+                          }
+                        >
+                          {formatDate(b.dueDate, "short")}
                         </span>
                       </td>
 
                       {/* Amount */}
-                      <td className="py-3 px-4 text-right font-mono font-bold text-sm text-slate-900">
-                        {formatINR(bill.amount)}
-                      </td>
-
-                      {/* Due Date */}
-                      <td className="py-3 px-4 whitespace-nowrap">
-                        <span
-                          className={
-                            isOverdue
-                              ? "font-semibold text-rose-600"
-                              : isPaid
-                              ? "text-slate-500"
-                              : "text-slate-800 font-medium"
-                          }
-                        >
-                          {formatDate(bill.dueDate, "short")}
-                        </span>
-                      </td>
-
-                      {/* Recurrence */}
-                      <td className="py-3 px-4">
-                        {bill.isRecurring ? (
-                          <div className="flex items-center gap-1 text-[11px] font-medium text-indigo-700 bg-indigo-50/70 border border-indigo-200/60 px-2 py-0.5 rounded w-fit">
-                            <RefreshCw className="w-3 h-3 text-indigo-600 shrink-0" />
-                            <span className="capitalize">{bill.recurringFrequency || "Monthly"}</span>
-                          </div>
-                        ) : (
-                          <span className="text-slate-400 text-[11px]">One-time</span>
-                        )}
+                      <td className="py-3.5 px-4 text-right font-mono font-bold text-slate-900 text-sm tabular-nums">
+                        {formatINR(b.amount)}
                       </td>
 
                       {/* Status */}
-                      <td className="py-3 px-4">
-                        {isPaid ? (
-                          <Badge variant="success" className="gap-1 text-[10px]">
-                            <Check className="w-3 h-3" /> PAID
+                      <td className="py-3.5 px-4">
+                        {b.status === "paid" ? (
+                          <Badge variant="success" className="gap-1 text-[10px] font-semibold">
+                            <CheckCircle2 className="w-3 h-3" /> Settled
                           </Badge>
                         ) : isOverdue ? (
-                          <Badge variant="danger" className="gap-1 text-[10px]">
-                            <AlertCircle className="w-3 h-3" /> OVERDUE
+                          <Badge variant="danger" className="gap-1 text-[10px] font-semibold">
+                            <AlertCircle className="w-3 h-3" /> Overdue
                           </Badge>
                         ) : (
-                          <Badge variant="info" className="gap-1 text-[10px]">
-                            <Clock className="w-3 h-3" /> UPCOMING
+                          <Badge variant="warning" className="gap-1 text-[10px] font-semibold">
+                            <Clock className="w-3 h-3" /> Due Soon
                           </Badge>
-                        )}
-                      </td>
-
-                      {/* Settlement Details */}
-                      <td className="py-3 px-4">
-                        {isPaid ? (
-                          <div className="space-y-0.5">
-                            <div className="text-[11px] font-semibold text-emerald-800">
-                              Paid {bill.paidDate ? formatDate(bill.paidDate, "short") : "—"}
-                            </div>
-                          </div>
-                        ) : (
-                          <span className="text-slate-400 text-[11px] italic">Pending settlement</span>
                         )}
                       </td>
 
                       {/* Actions */}
-                      <td className="py-3 px-4 text-right">
+                      <td className="py-3.5 px-4 text-right">
                         <div className="flex items-center justify-end gap-1.5">
-                          {!isPaid ? (
+                          {b.status !== "paid" && (
                             <Button
+                              variant="outline"
                               size="sm"
-                              onClick={() => onMarkPaid(bill)}
-                              className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs h-7 px-2.5 gap-1"
+                              onClick={() => onMarkPaid(b)}
+                              className="h-7 px-2.5 text-[11px] font-semibold text-emerald-700 hover:bg-emerald-50 border-emerald-200 gap-1"
                             >
-                              <CheckCircle2 className="w-3 h-3" />
-                              <span>Mark Paid</span>
+                              <Check className="w-3 h-3" />
+                              <span>Settle</span>
                             </Button>
-                          ) : (
-                            <span className="text-xs text-slate-400 font-medium mr-1">Reconciled</span>
                           )}
-
                           {onArchiveBill && (
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => onArchiveBill(bill)}
-                              className="h-7 w-7 p-0 text-slate-400 hover:text-rose-600 hover:bg-rose-50"
-                              title="Archive overhead record"
+                              onClick={() => onArchiveBill(b)}
+                              className="h-7 w-7 p-0 text-slate-400 hover:text-rose-600"
+                              title="Archive Bill"
                             >
                               <Archive className="w-3.5 h-3.5" />
                             </Button>
@@ -377,51 +434,23 @@ export function ExpenseDirectoryTable({
                     </tr>
                   );
                 })
-              ) : (
-                <tr>
-                  <td colSpan={9} className="py-12 text-center">
-                    <div className="max-w-sm mx-auto space-y-3">
-                      <div className="w-12 h-12 rounded-full bg-slate-100 text-slate-400 mx-auto flex items-center justify-center">
-                        <Building className="w-6 h-6" />
-                      </div>
-                      <div className="space-y-1">
-                        <p className="text-sm font-semibold text-slate-900">
-                          {bills.length === 0
-                            ? "No operating overheads recorded yet"
-                            : "No overhead expenses match your criteria"}
-                        </p>
-                        <p className="text-xs text-slate-500">
-                          {bills.length === 0
-                            ? "Add your centre rent, utilities, teaching materials, and tutor honorariums to track outflow schedules."
-                            : "Try switching tabs, clearing search keywords, or selecting another category."}
-                        </p>
-                      </div>
-                      {hasActiveFilters ? (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={clearFilters}
-                          className="text-xs"
-                        >
-                          Clear Filters
-                        </Button>
-                      ) : (
-                        <Button
-                          size="sm"
-                          onClick={onAddExpenseClick}
-                          className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs gap-1.5"
-                        >
-                          <Plus className="w-3.5 h-3.5" />
-                          <span>Record First Expense</span>
-                        </Button>
-                      )}
-                    </div>
-                  </td>
-                </tr>
               )}
             </tbody>
           </table>
         </div>
+
+        {/* Table Footer */}
+        {bills.length > 0 && (
+          <div className="p-3.5 bg-slate-50/70 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-500 font-medium">
+            <span className="tabular-nums">
+              Showing <strong className="text-slate-800 font-bold">{filteredBills.length}</strong> of{" "}
+              <strong className="text-slate-800 font-bold">{bills.length}</strong> expenses
+            </span>
+            <span className="text-[11px] text-slate-400">
+              Operating expenses are incorporated into daily cash runway calculations with integer paise precision.
+            </span>
+          </div>
+        )}
       </div>
     </div>
   );

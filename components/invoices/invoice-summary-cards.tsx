@@ -51,40 +51,40 @@ export function InvoiceSummaryCards({ invoices }: InvoiceSummaryCardsProps) {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       {/* Total Invoiced */}
-      <Card className="border-slate-200/90 shadow-2xs hover:shadow-sm transition-shadow">
+      <Card className="border-slate-200/90 shadow-2xs hover:shadow-md transition-shadow bg-white">
         <CardContent className="p-5">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
               Total Invoiced
             </span>
-            <div className="p-2 rounded-lg bg-indigo-50 text-indigo-600 border border-indigo-100">
+            <div className="p-2 rounded-xl bg-indigo-50 text-indigo-600 border border-indigo-100">
               <FileText className="w-4 h-4 stroke-[2.2]" />
             </div>
           </div>
-          <div className="text-2xl font-bold tracking-tight text-slate-900 font-mono">
+          <div className="text-2xl font-extrabold tracking-tight text-slate-900 font-mono tabular-nums">
             {formatINR(totalInvoiced)}
           </div>
-          <p className="text-xs text-slate-500 mt-1">
+          <p className="text-xs text-slate-500 mt-1 font-medium">
             Across {invoices.length} billing records
           </p>
         </CardContent>
       </Card>
 
       {/* Total Collected */}
-      <Card className="border-slate-200/90 shadow-2xs hover:shadow-sm transition-shadow">
+      <Card className="border-slate-200/90 shadow-2xs hover:shadow-md transition-shadow bg-white">
         <CardContent className="p-5">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
               Fees Collected
             </span>
-            <div className="p-2 rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-100">
+            <div className="p-2 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-100">
               <CheckCircle2 className="w-4 h-4 stroke-[2.2]" />
             </div>
           </div>
-          <div className="text-2xl font-bold tracking-tight text-emerald-700 font-mono">
+          <div className="text-2xl font-extrabold tracking-tight text-emerald-700 font-mono tabular-nums">
             {formatINR(totalCollected)}
           </div>
-          <p className="text-xs text-slate-500 mt-1">
+          <p className="text-xs text-slate-500 mt-1 font-medium">
             {totalInvoiced > 0
               ? `${((totalCollected / totalInvoiced) * 100).toFixed(1)}% recovery rate`
               : "0% collected"}
@@ -93,40 +93,40 @@ export function InvoiceSummaryCards({ invoices }: InvoiceSummaryCardsProps) {
       </Card>
 
       {/* Outstanding Balance */}
-      <Card className="border-slate-200/90 shadow-2xs hover:shadow-sm transition-shadow">
+      <Card className="border-slate-200/90 shadow-2xs hover:shadow-md transition-shadow bg-white">
         <CardContent className="p-5">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
               Balance Due
             </span>
-            <div className="p-2 rounded-lg bg-amber-50 text-amber-600 border border-amber-100">
+            <div className="p-2 rounded-xl bg-amber-50 text-amber-600 border border-amber-100">
               <Clock className="w-4 h-4 stroke-[2.2]" />
             </div>
           </div>
-          <div className="text-2xl font-bold tracking-tight text-slate-900 font-mono">
+          <div className="text-2xl font-extrabold tracking-tight text-slate-900 font-mono tabular-nums">
             {formatINR(totalOutstanding)}
           </div>
-          <p className="text-xs text-slate-500 mt-1">
+          <p className="text-xs text-slate-500 mt-1 font-medium">
             {totalOutstanding > 0 ? "Pending fee settlements" : "All dues settled"}
           </p>
         </CardContent>
       </Card>
 
       {/* Overdue Amount */}
-      <Card className="border-slate-200/90 shadow-2xs hover:shadow-sm transition-shadow">
+      <Card className="border-slate-200/90 shadow-2xs hover:shadow-md transition-shadow bg-white">
         <CardContent className="p-5">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
               Overdue Fees
             </span>
-            <div className="p-2 rounded-lg bg-rose-50 text-rose-600 border border-rose-100">
+            <div className="p-2 rounded-xl bg-rose-50 text-rose-600 border border-rose-100">
               <AlertTriangle className="w-4 h-4 stroke-[2.2]" />
             </div>
           </div>
-          <div className="text-2xl font-bold tracking-tight text-rose-600 font-mono">
+          <div className="text-2xl font-extrabold tracking-tight text-rose-600 font-mono tabular-nums">
             {formatINR(overdueAmount)}
           </div>
-          <p className="text-xs text-slate-500 mt-1">
+          <p className="text-xs text-slate-500 mt-1 font-medium">
             {overdueCount > 0
               ? `Across ${overdueCount} overdue ${overdueCount === 1 ? "invoice" : "invoices"}`
               : "No overdue receivables"}

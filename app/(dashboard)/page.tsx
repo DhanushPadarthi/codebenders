@@ -8,8 +8,6 @@ import { getBills } from "@/lib/dal/bills";
 import { getPaymentPromises, getFollowUpTasks } from "@/lib/dal/recovery";
 import { DashboardClientView } from "@/components/dashboard/dashboard-client-view";
 
-export const instant = false;
-
 export default async function DashboardPage() {
   const { supabase } = await requireUser();
   const context = await getBusinessContext();

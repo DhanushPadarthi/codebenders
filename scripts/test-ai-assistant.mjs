@@ -428,7 +428,7 @@ console.log("\nTest 11: API timeout & network degradation handling...");
 // -------------------------------------------------------------
 console.log("\nTest 12: Sensitive credential leak prevention...");
 {
-  const mockApiKey = process.env.GROQ_API_KEY || "gsk_test_secret_key_12345";
+  const mockApiKey = process.env.GROQ_API_KEY || "synthetic_dummy_key_for_leak_assertion_only";
 
   // 1. Verify promise parser output does not leak API keys
   const promiseOutput = fallbackParsePaymentPromise("Will pay 5000", "2026-11-21");

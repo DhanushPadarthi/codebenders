@@ -57,14 +57,26 @@ export interface PaymentSummaryMetrics {
   thisMonthCollected: number;
 }
 
+export const isValidCurrencyPrecision = (val: number): boolean => {
+  if (typeof val !== 'number' || isNaN(val) || !isFinite(val)) return false;
+  const str = val.toString();
+  if (str.includes('e') || str.includes('E')) return false;
+  const decimalPart = str.split('.')[1];
+  return !decimalPart || decimalPart.length <= 2;
+};
+
 export const RecordPaymentSchema = z.object({
   invoiceId: z.string().uuid('Invalid invoice ID format.'),
-  amount: z.number().positive('Payment amount must be greater than zero.'),
+  amount: z
+    .number({ invalid_type_error: 'Amount must be a number' })
+    .positive('Payment amount must be greater than zero.')
+    .refine(isValidCurrencyPrecision, 'Payment amount cannot have more than 2 decimal places.'),
   paymentMode: z.enum(['upi', 'cash', 'bank_transfer', 'cheque', 'other'], {
     errorMap: () => ({ message: 'Payment mode must be UPI, Cash, Bank Transfer, Cheque, or Other.' }),
   }),
   paymentDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Payment date must be in YYYY-MM-DD format.'),
   referenceId: z.string().trim().max(100).optional().nullable(),
+  idempotencyKey: z.string().trim().max(100).optional().nullable(),
   notes: z.string().trim().max(1000).optional().nullable(),
   receiptImageUrl: z.string().url().optional().nullable(),
 });
@@ -398,18 +410,66 @@ export async function recordInvoicePayment(
     );
   }
 
+  // 2b. Durable Idempotency & Duplicate Reference Check:
+  // External banking references (UPI UTR / Cheque) and explicit idempotency keys guarantee idempotency.
+  // We do NOT use amount/date/mode combinations as unique identifiers to avoid falsely rejecting
+  // legitimate multiple payments of identical amounts on the same invoice and date.
+  const rawRef = validated.referenceId?.trim() || null;
+  const cleanRef = (rawRef && rawRef !== '—' && rawRef !== '-') ? rawRef : null;
+  const cleanKey = validated.idempotencyKey?.trim() || null;
+
+  // Determine effective reference:
+  // 1. If external reference is provided (UTR/cheque), it acts as the primary unique identifier.
+  // 2. Otherwise, use the explicit idempotencyKey.
+  // 3. If neither was provided, assign a stable UUID to input so retries using the same input object retain it.
+  let effectiveRef: string;
+  if (cleanRef) {
+    effectiveRef = cleanRef;
+  } else if (cleanKey) {
+    effectiveRef = cleanKey;
+  } else {
+    const generated = crypto.randomUUID();
+    input.idempotencyKey = generated;
+    effectiveRef = generated;
+  }
+
+  if (effectiveRef && effectiveRef !== '—' && effectiveRef !== '-') {
+    const { data: existingPayment } = await supabase
+      .from('payments')
+      .select('id, invoice_id, amount, payment_date')
+      .eq('business_id', businessId)
+      .eq('reference_id', effectiveRef)
+      .maybeSingle();
+
+    if (existingPayment) {
+      throw new Error(`Duplicate payment rejected: A payment with reference ID or idempotency key "${effectiveRef}" has already been recorded for this business.`);
+    }
+  }
+
   // 3. Call secure database RPC public.record_invoice_payment()
   const { data: rpcData, error: rpcError } = await supabase.rpc('record_invoice_payment', {
     p_invoice_id: validated.invoiceId,
     p_amount: validated.amount,
     p_payment_mode: validated.paymentMode,
     p_payment_date: validated.paymentDate,
-    p_reference_id: validated.referenceId || null,
+    p_reference_id: effectiveRef,
     p_notes: validated.notes || null,
     p_receipt_image_url: validated.receiptImageUrl || null,
   });
 
   if (rpcError) {
+    const isDuplicate =
+      rpcError.code === '23505' ||
+      rpcError.message?.includes('Duplicate payment rejected') ||
+      rpcError.message?.includes('uq_payments_business_reference') ||
+      rpcError.message?.includes('already been recorded');
+
+    if (isDuplicate) {
+      throw new Error(
+        `Duplicate payment rejected: A payment with reference ID or idempotency key "${effectiveRef}" has already been recorded for this business.`
+      );
+    }
+
     throw new Error(`Payment processing failed: ${rpcError.message}`);
   }
 

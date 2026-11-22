@@ -4,11 +4,15 @@ import { getBusinessContext } from "@/lib/auth/get-business-context";
 import { getBills, getExpenseSummaryMetrics } from "@/lib/dal/bills";
 import { ExpensesClientView } from "@/components/expenses/expenses-client-view";
 
-export const instant = false;
-
-export default async function ExpensesPage() {
+export default async function ExpensesPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ search?: string }>;
+}) {
   const { supabase } = await requireUser();
   const context = await getBusinessContext();
+  const params = await searchParams;
+  const initialSearch = params?.search || "";
 
   if (!context.business) {
     return (
@@ -32,6 +36,7 @@ export default async function ExpensesPage() {
     <ExpensesClientView
       initialBills={initialBills}
       metrics={metrics}
+      initialSearch={initialSearch}
     />
   );
 }

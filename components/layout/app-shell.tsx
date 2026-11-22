@@ -6,6 +6,7 @@ import { Sidebar } from "./sidebar";
 import { Header } from "./header";
 import { CreateInvoiceModal } from "@/components/dashboard/create-invoice-modal";
 import { InvoiceProvider } from "@/lib/invoice-context";
+import { WelcomeWalkthrough } from "@/components/onboarding/welcome-walkthrough";
 
 interface AppShellProps {
   children: React.ReactNode;
@@ -69,6 +70,9 @@ export function AppShell({ children }: AppShellProps) {
           isOpen={createInvoiceOpen}
           onClose={() => setCreateInvoiceOpen(false)}
         />
+
+        {/* Device-Responsive Onboarding & Feature Walkthrough */}
+        <WelcomeWalkthrough />
       </div>
     </InvoiceProvider>
   );

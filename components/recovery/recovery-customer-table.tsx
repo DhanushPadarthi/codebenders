@@ -51,11 +51,12 @@ export function RecoveryCustomerTable({
     }
 
     // Promise filter
+    const todayStr = new Date().toISOString().slice(0, 10);
     if (promiseFilter === "BROKEN" && item.activePromise?.status !== "broken") {
       return false;
     }
     if (promiseFilter === "DUE_TODAY") {
-      const isDueToday = item.activePromise?.status === "pending" && item.activePromise.promisedDate === "2026-11-21";
+      const isDueToday = item.activePromise?.status === "pending" && item.activePromise.promisedDate === todayStr;
       if (!isDueToday) return false;
     }
     if (promiseFilter === "NO_PROMISE" && item.activePromise) {
@@ -110,7 +111,8 @@ export function RecoveryCustomerTable({
       );
     }
 
-    if (item.activePromise.status === "pending" && item.activePromise.promisedDate === "2026-11-21") {
+    const todayStr = new Date().toISOString().slice(0, 10);
+    if (item.activePromise.status === "pending" && item.activePromise.promisedDate === todayStr) {
       return (
         <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200">
           <CalendarCheck className="w-3 h-3 text-amber-600" />

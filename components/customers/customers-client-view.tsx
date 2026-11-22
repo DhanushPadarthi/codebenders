@@ -14,11 +14,13 @@ import type { CustomerRecord } from "@/lib/dal/customers";
 interface CustomersClientViewProps {
   initialCustomers: CustomerRecord[];
   businessName: string;
+  initialSearch?: string;
 }
 
 export function CustomersClientView({
   initialCustomers,
   businessName,
+  initialSearch = "",
 }: CustomersClientViewProps) {
   const [customers, setCustomers] = useState<CustomerRecord[]>(initialCustomers);
   const [selectedStudent, setSelectedStudent] = useState<CustomerRecord | null>(null);
@@ -136,6 +138,7 @@ export function CustomersClientView({
           onSelectStudent={(student) => setSelectedStudent(student)}
           onOpenAddStudent={() => setIsAddModalOpen(true)}
           onEditStudent={(student) => setEditingStudent(student)}
+          initialSearch={initialSearch}
         />
       </section>
 

@@ -63,24 +63,24 @@ export function RecentInvoicesTable(props: RecentInvoicesTableProps) {
     switch (status) {
       case "paid":
         return (
-          <Badge variant="success" className="gap-1">
+          <Badge variant="success" className="gap-1 font-semibold">
             <CheckCircle2 className="w-3 h-3" /> Paid
           </Badge>
         );
       case "partially_paid":
         return (
-          <Badge variant="warning" className="gap-1">
-            <Clock className="w-3 h-3" /> Partially Paid
+          <Badge variant="warning" className="gap-1 font-semibold">
+            <Clock className="w-3 h-3" /> Partial
           </Badge>
         );
       case "overdue":
         return (
           <div className="flex items-center gap-1.5 flex-wrap">
-            <Badge variant="danger" className="gap-1">
+            <Badge variant="danger" className="gap-1 font-semibold">
               <AlertCircle className="w-3 h-3" /> Overdue ({overdueDays || 0}d)
             </Badge>
             {amountPaid && amountPaid > 0 ? (
-              <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
+              <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded-md border border-emerald-200">
                 Part-Paid
               </span>
             ) : null}
@@ -88,20 +88,20 @@ export function RecentInvoicesTable(props: RecentInvoicesTableProps) {
         );
       case "sent":
         return (
-          <Badge variant="info" className="gap-1">
+          <Badge variant="info" className="gap-1 font-semibold">
             <Send className="w-3 h-3" /> Sent
           </Badge>
         );
       case "cancelled":
         return (
-          <Badge variant="secondary" className="gap-1 text-slate-500">
+          <Badge variant="secondary" className="gap-1 text-slate-500 font-semibold">
             Cancelled
           </Badge>
         );
       case "draft":
       default:
         return (
-          <Badge variant="secondary" className="gap-1">
+          <Badge variant="secondary" className="gap-1 font-semibold">
             <FileEdit className="w-3 h-3" /> Draft
           </Badge>
         );
@@ -109,11 +109,11 @@ export function RecentInvoicesTable(props: RecentInvoicesTableProps) {
   };
 
   return (
-    <Card className="border-slate-200 shadow-sm">
-      <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-3">
+    <Card className="border-slate-200/90 shadow-sm overflow-hidden bg-white">
+      <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-5 pb-4 border-b border-slate-100">
         <div>
           <div className="flex items-center gap-2">
-            <div className="p-1.5 rounded-lg bg-slate-100 text-slate-700">
+            <div className="p-1.5 rounded-xl bg-slate-100 text-slate-700">
               <FileText className="w-4 h-4" />
             </div>
             <CardTitle className="text-base font-bold text-slate-900">
@@ -121,17 +121,17 @@ export function RecentInvoicesTable(props: RecentInvoicesTableProps) {
             </CardTitle>
           </div>
           <CardDescription className="mt-1">
-            Student fee billing records across tuition batches.
+            Student fee billing records across tuition batches with live settlement status.
           </CardDescription>
         </div>
 
         {/* Filter controls */}
-        <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg border border-slate-200/60 self-start sm:self-auto text-xs">
+        <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200/60 self-start sm:self-auto text-xs font-semibold">
           <button
             onClick={() => setFilter("all")}
-            className={`px-2.5 py-1 font-medium rounded-md transition-all ${
+            className={`px-3 py-1 rounded-lg transition-all cursor-pointer ${
               filter === "all"
-                ? "bg-white text-slate-900 shadow-xs"
+                ? "bg-white text-slate-900 shadow-2xs font-bold"
                 : "text-slate-600 hover:text-slate-900"
             }`}
           >
@@ -139,9 +139,9 @@ export function RecentInvoicesTable(props: RecentInvoicesTableProps) {
           </button>
           <button
             onClick={() => setFilter("pending")}
-            className={`px-2.5 py-1 font-medium rounded-md transition-all ${
+            className={`px-3 py-1 rounded-lg transition-all cursor-pointer ${
               filter === "pending"
-                ? "bg-white text-slate-900 shadow-xs"
+                ? "bg-white text-slate-900 shadow-2xs font-bold"
                 : "text-slate-600 hover:text-slate-900"
             }`}
           >
@@ -149,9 +149,9 @@ export function RecentInvoicesTable(props: RecentInvoicesTableProps) {
           </button>
           <button
             onClick={() => setFilter("overdue")}
-            className={`px-2.5 py-1 font-medium rounded-md transition-all ${
+            className={`px-3 py-1 rounded-lg transition-all cursor-pointer ${
               filter === "overdue"
-                ? "bg-white text-rose-700 shadow-xs"
+                ? "bg-white text-rose-700 shadow-2xs font-bold"
                 : "text-slate-600 hover:text-rose-600"
             }`}
           >
@@ -159,9 +159,9 @@ export function RecentInvoicesTable(props: RecentInvoicesTableProps) {
           </button>
           <button
             onClick={() => setFilter("paid")}
-            className={`px-2.5 py-1 font-medium rounded-md transition-all ${
+            className={`px-3 py-1 rounded-lg transition-all cursor-pointer ${
               filter === "paid"
-                ? "bg-white text-emerald-700 shadow-xs"
+                ? "bg-white text-emerald-700 shadow-2xs font-bold"
                 : "text-slate-600 hover:text-emerald-600"
             }`}
           >
@@ -173,31 +173,31 @@ export function RecentInvoicesTable(props: RecentInvoicesTableProps) {
       <CardContent className="p-0">
         {rawInvoices.length === 0 ? (
           <div className="text-center py-12 px-4 space-y-3">
-            <div className="w-10 h-10 rounded-full bg-slate-100 text-slate-400 mx-auto flex items-center justify-center">
-              <FileText className="w-5 h-5" />
+            <div className="w-12 h-12 rounded-2xl bg-slate-100 text-slate-400 mx-auto flex items-center justify-center">
+              <FileText className="w-6 h-6" />
             </div>
             <div>
-              <p className="text-sm font-semibold text-slate-800">No invoices generated yet</p>
+              <p className="text-sm font-bold text-slate-900">No invoices generated yet</p>
               <p className="text-xs text-slate-500 mt-0.5">
                 Create your first student fee invoice to start tracking fee collections.
               </p>
             </div>
             <Link href="/invoices/new">
-              <Button size="sm" className="text-xs bg-slate-900 text-white gap-1.5 shadow-2xs mt-2">
+              <Button size="sm" className="text-xs bg-slate-900 text-white gap-1.5 shadow-2xs mt-2 font-semibold">
                 <Plus className="w-3.5 h-3.5" />
                 <span>Create Invoice</span>
               </Button>
             </Link>
           </div>
         ) : displayInvoices.length === 0 ? (
-          <div className="text-center py-8 px-4 text-xs text-slate-500">
+          <div className="text-center py-10 px-4 text-xs text-slate-500 font-medium">
             No invoices found for filter &ldquo;{filter}&rdquo;.
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse text-xs">
               <thead>
-                <tr className="border-y border-slate-100 bg-slate-50/75 text-slate-500 font-semibold uppercase tracking-wider">
+                <tr className="border-b border-slate-100 bg-slate-50/75 text-slate-500 font-bold uppercase tracking-wider text-[11px]">
                   <th className="py-3 px-4">Invoice #</th>
                   <th className="py-3 px-4">Student &amp; Batch</th>
                   <th className="py-3 px-4 hidden md:table-cell">Issue Date</th>
@@ -211,23 +211,23 @@ export function RecentInvoicesTable(props: RecentInvoicesTableProps) {
                 {displayInvoices.map((inv) => (
                   <tr
                     key={inv.id}
-                    className="hover:bg-slate-50/70 transition-colors group"
+                    className="hover:bg-slate-50/80 transition-colors group"
                   >
-                    <td className="py-3.5 px-4 font-mono font-semibold text-slate-900">
+                    <td className="py-3.5 px-4 font-mono font-bold text-slate-900 tabular-nums">
                       {inv.invoiceNumber}
                     </td>
                     <td className="py-3.5 px-4">
-                      <div className="font-semibold text-slate-900">
+                      <div className="font-semibold text-slate-900 group-hover:text-indigo-600 transition-colors">
                         {inv.customerName}
                       </div>
                       <div className="text-[11px] text-slate-500">
                         {inv.customerGrade || "General Batch"}
                       </div>
                     </td>
-                    <td className="py-3.5 px-4 hidden md:table-cell text-slate-500">
+                    <td className="py-3.5 px-4 hidden md:table-cell text-slate-500 tabular-nums">
                       {formatDate(inv.issueDate, "short")}
                     </td>
-                    <td className="py-3.5 px-4">
+                    <td className="py-3.5 px-4 tabular-nums">
                       <span
                         className={
                           inv.status === "overdue"
@@ -238,10 +238,10 @@ export function RecentInvoicesTable(props: RecentInvoicesTableProps) {
                         {formatDate(inv.dueDate, "short")}
                       </span>
                     </td>
-                    <td className="py-3.5 px-4 text-right font-mono font-bold text-slate-900">
+                    <td className="py-3.5 px-4 text-right font-mono font-bold text-slate-900 tabular-nums">
                       {formatINR(inv.totalAmount)}
                       {inv.amountPaid > 0 && inv.status !== "paid" && (
-                        <span className="block text-[10px] font-normal text-emerald-600">
+                        <span className="block text-[10px] font-normal text-emerald-600 tabular-nums">
                           Paid: {formatINR(inv.amountPaid)}
                         </span>
                       )}
@@ -270,7 +270,7 @@ export function RecentInvoicesTable(props: RecentInvoicesTableProps) {
                             <Button
                               variant="danger"
                               size="sm"
-                              className="h-7 px-2 text-[11px] gap-1"
+                              className="h-7 px-2 text-[11px] gap-1 font-semibold"
                             >
                               <Send className="w-3 h-3" /> Remind
                             </Button>
@@ -285,13 +285,13 @@ export function RecentInvoicesTable(props: RecentInvoicesTableProps) {
           </div>
         )}
 
-        <div className="p-3.5 bg-slate-50/50 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
-          <span>
+        <div className="p-3.5 bg-slate-50/60 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500 font-medium">
+          <span className="tabular-nums">
             Showing {displayInvoices.length} of {rawInvoices.length} invoices
           </span>
           <Link
             href="/invoices"
-            className="font-semibold text-slate-800 hover:text-slate-900 flex items-center gap-1"
+            className="font-bold text-slate-800 hover:text-slate-900 flex items-center gap-1 transition-colors"
           >
             View All Invoices <ArrowUpRight className="w-3.5 h-3.5" />
           </Link>

@@ -182,6 +182,7 @@ function RecordPaymentForm({
   const [referenceId, setReferenceId] = useState<string>("");
   const [paymentDate, setPaymentDate] = useState<string>(() => new Date().toISOString().slice(0, 10));
   const [notes, setNotes] = useState<string>("");
+  const [idempotencyKey, setIdempotencyKey] = useState<string>(() => crypto.randomUUID());
 
   const [formError, setFormError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -207,6 +208,7 @@ function RecordPaymentForm({
   // Event handler for student change
   const handleStudentChange = (newCustId: string) => {
     setSelectedCustomerId(newCustId);
+    setIdempotencyKey(crypto.randomUUID());
     const matchedInvoices = invoices.filter(
       (inv) =>
         inv.customerId === newCustId &&
@@ -228,6 +230,7 @@ function RecordPaymentForm({
   // Event handler for invoice change
   const handleInvoiceChange = (invId: string) => {
     setSelectedInvoiceId(invId);
+    setIdempotencyKey(crypto.randomUUID());
     const inv = invoices.find((i) => i.id === invId);
     if (inv) {
       setPaymentAmount(inv.balanceDue.toString());
@@ -281,6 +284,7 @@ function RecordPaymentForm({
         paymentDate,
         referenceId: referenceId.trim() || null,
         notes: notes.trim() || null,
+        idempotencyKey,
       });
 
       if (!res.success) {
@@ -334,6 +338,7 @@ function RecordPaymentForm({
     setReferenceId("");
     setNotes("");
     setFormError(null);
+    setIdempotencyKey(crypto.randomUUID());
   };
 
   return (

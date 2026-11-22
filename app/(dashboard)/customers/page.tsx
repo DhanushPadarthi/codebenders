@@ -4,11 +4,15 @@ import { getBusinessContext } from "@/lib/auth/get-business-context";
 import { getCustomers } from "@/lib/dal/customers";
 import { CustomersClientView } from "@/components/customers/customers-client-view";
 
-export const instant = false;
-
-export default async function CustomersPage() {
+export default async function CustomersPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ search?: string }>;
+}) {
   const { supabase } = await requireUser();
   const context = await getBusinessContext();
+  const params = await searchParams;
+  const initialSearch = params?.search || "";
 
   if (!context.business) {
     return (
@@ -29,6 +33,7 @@ export default async function CustomersPage() {
     <CustomersClientView
       initialCustomers={initialCustomers}
       businessName={context.business.name}
+      initialSearch={initialSearch}
     />
   );
 }

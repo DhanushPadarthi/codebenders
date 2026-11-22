@@ -1,7 +1,8 @@
 'use server';
 
+import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
-import { requireUser } from '@/lib/auth/require-user';
+import { requireUser, handleActionError } from '@/lib/auth/require-user';
 import { getBusinessContext } from '@/lib/auth/get-business-context';
 import {
   getPayments,
@@ -44,9 +45,8 @@ export async function getPaymentsAction(options?: {
     const payments = await getPayments(supabase, context.business.id, options);
     return { success: true, data: payments };
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Failed to retrieve payment records.';
-    console.error('getPaymentsAction error:', message);
-    return { success: false, error: message };
+    console.error('getPaymentsAction error:', err);
+    return handleActionError(err, 'Failed to retrieve payment records.');
   }
 }
 
@@ -57,6 +57,10 @@ export async function getPaymentByIdAction(
   id: string
 ): Promise<ActionResult<PaymentRecord | null>> {
   try {
+    if (!z.string().uuid().safeParse(id).success) {
+      return { success: false, error: 'Invalid payment ID format.' };
+    }
+
     const { supabase } = await requireUser();
     const context = await getBusinessContext();
 
@@ -67,9 +71,8 @@ export async function getPaymentByIdAction(
     const payment = await getPaymentById(supabase, context.business.id, id);
     return { success: true, data: payment };
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Failed to retrieve payment record.';
-    console.error('getPaymentByIdAction error:', message);
-    return { success: false, error: message };
+    console.error('getPaymentByIdAction error:', err);
+    return handleActionError(err, 'Failed to retrieve payment record.');
   }
 }
 
@@ -80,6 +83,10 @@ export async function getPaymentsByInvoiceAction(
   invoiceId: string
 ): Promise<ActionResult<PaymentRecord[]>> {
   try {
+    if (!z.string().uuid().safeParse(invoiceId).success) {
+      return { success: false, error: 'Invalid invoice ID format.' };
+    }
+
     const { supabase } = await requireUser();
     const context = await getBusinessContext();
 
@@ -90,9 +97,8 @@ export async function getPaymentsByInvoiceAction(
     const payments = await getPaymentsByInvoiceId(supabase, context.business.id, invoiceId);
     return { success: true, data: payments };
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Failed to retrieve invoice payment history.';
-    console.error('getPaymentsByInvoiceAction error:', message);
-    return { success: false, error: message };
+    console.error('getPaymentsByInvoiceAction error:', err);
+    return handleActionError(err, 'Failed to retrieve invoice payment history.');
   }
 }
 
@@ -103,6 +109,10 @@ export async function getPaymentsByCustomerAction(
   customerId: string
 ): Promise<ActionResult<PaymentRecord[]>> {
   try {
+    if (!z.string().uuid().safeParse(customerId).success) {
+      return { success: false, error: 'Invalid customer ID format.' };
+    }
+
     const { supabase } = await requireUser();
     const context = await getBusinessContext();
 
@@ -113,9 +123,8 @@ export async function getPaymentsByCustomerAction(
     const payments = await getPaymentsByCustomerId(supabase, context.business.id, customerId);
     return { success: true, data: payments };
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Failed to retrieve student payment history.';
-    console.error('getPaymentsByCustomerAction error:', message);
-    return { success: false, error: message };
+    console.error('getPaymentsByCustomerAction error:', err);
+    return handleActionError(err, 'Failed to retrieve student payment history.');
   }
 }
 
@@ -134,9 +143,8 @@ export async function getPaymentSummaryAction(): Promise<ActionResult<PaymentSum
     const metrics = await getPaymentSummaryMetrics(supabase, context.business.id);
     return { success: true, data: metrics };
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Failed to compute payment summary.';
-    console.error('getPaymentSummaryAction error:', message);
-    return { success: false, error: message };
+    console.error('getPaymentSummaryAction error:', err);
+    return handleActionError(err, 'Failed to compute payment summary.');
   }
 }
 
@@ -182,8 +190,7 @@ export async function recordPaymentAction(
 
     return { success: true, data: result };
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Failed to record payment.';
-    console.error('recordPaymentAction error:', message);
-    return { success: false, error: message };
+    console.error('recordPaymentAction error:', err);
+    return handleActionError(err, 'Failed to record payment.');
   }
 }

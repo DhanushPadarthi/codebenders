@@ -16,6 +16,35 @@ import { z } from "zod";
 // 1. Zod Schemas
 // ============================================================================
 
+export const coerceNumberOrNull = z.preprocess((val) => {
+  if (val === null || val === undefined || val === "") return null;
+  if (typeof val === "number") return isNaN(val) ? null : val;
+  if (typeof val === "string") {
+    const cleaned = val.replace(/[^0-9.-]/g, "");
+    if (!cleaned) return null;
+    const parsed = parseFloat(cleaned);
+    return isNaN(parsed) ? null : parsed;
+  }
+  return null;
+}, z.number().nullable().optional());
+
+export const coerceConfidenceScore = z.preprocess((val) => {
+  if (typeof val === "number") {
+    if (isNaN(val)) return 0.5;
+    if (val > 1 && val <= 100) return Math.round((val / 100) * 100) / 100;
+    return Math.max(0, Math.min(1, Math.round(val * 100) / 100));
+  }
+  if (typeof val === "string") {
+    const cleaned = val.replace(/[^0-9.-]/g, "");
+    const parsed = parseFloat(cleaned);
+    if (!isNaN(parsed)) {
+      if (parsed > 1 && parsed <= 100) return Math.round((parsed / 100) * 100) / 100;
+      return Math.max(0, Math.min(1, Math.round(parsed * 100) / 100));
+    }
+  }
+  return 0.5;
+}, z.number().min(0).max(1));
+
 export const PaymentPromiseParseRequestSchema = z.object({
   messageText: z.string().min(1, "Message text is required").max(2000, "Message text exceeds maximum length of 2000 characters"),
   referenceDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Reference date must be YYYY-MM-DD").optional(),
@@ -26,13 +55,13 @@ export type PaymentPromiseParseRequest = z.infer<typeof PaymentPromiseParseReque
 export const PaymentPromiseResultSchema = z.object({
   parentName: z.string().nullable().optional(),
   studentName: z.string().nullable().optional(),
-  promisedAmount: z.number().nullable().optional(),
+  promisedAmount: coerceNumberOrNull,
   promisedDate: z.string().nullable().optional(), // YYYY-MM-DD
   paymentMethod: z.string().nullable().optional(),
   invoiceReference: z.string().nullable().optional(),
   summary: z.string(),
-  confidenceScore: z.number().min(0).max(1),
-  needsClarification: z.boolean(),
+  confidenceScore: coerceConfidenceScore,
+  needsClarification: z.preprocess((val) => typeof val === "boolean" ? val : Boolean(val), z.boolean()),
   clarificationReason: z.string().nullable().optional(),
 });
 
@@ -58,15 +87,15 @@ export type ReceiptExtractRequest = z.infer<typeof ReceiptExtractRequestSchema>;
 export const ReceiptExtractResultSchema = z.object({
   merchantName: z.string().nullable().optional(),
   transactionDate: z.string().nullable().optional(), // YYYY-MM-DD
-  totalAmount: z.number().nullable().optional(),
+  totalAmount: coerceNumberOrNull,
   paymentMethod: z.string().nullable().optional(),
   transactionReference: z.string().nullable().optional(),
   category: z.string().nullable().optional(),
   lineItems: z.array(z.object({
     description: z.string(),
-    amount: z.number(),
+    amount: coerceNumberOrNull,
   })).nullable().optional(),
-  confidenceScore: z.number().min(0).max(1), // Estimated confidence score (0.0 to 1.0)
+  confidenceScore: coerceConfidenceScore, // Estimated confidence score (0.0 to 1.0)
   isBankVerified: z.literal(false), // ALWAYS FALSE: OCR cannot verify bank ledger settlement
   notes: z.string().nullable().optional(),
 });
@@ -76,13 +105,13 @@ export type ReceiptExtractResult = z.infer<typeof ReceiptExtractResultSchema>;
 export const PaymentScreenshotResultSchema = z.object({
   payerName: z.string().nullable().optional(),
   receiverName: z.string().nullable().optional(),
-  amount: z.number().nullable().optional(),
+  amount: coerceNumberOrNull,
   transactionDate: z.string().nullable().optional(),
   paymentMethod: z.string().nullable().optional(),
   utrReference: z.string().nullable().optional(),
-  confidenceScore: z.number().min(0).max(1), // Estimated confidence score (0.0 to 1.0)
+  confidenceScore: coerceConfidenceScore, // Estimated confidence score (0.0 to 1.0)
   isBankVerified: z.literal(false), // ALWAYS FALSE: OCR cannot verify bank ledger settlement
-  disclaimer: z.string(),
+  disclaimer: z.string().default("Extracted from image — not bank verified."),
 });
 
 export type PaymentScreenshotResult = z.infer<typeof PaymentScreenshotResultSchema>;
@@ -127,10 +156,13 @@ export type ReminderGenerateResult = z.infer<typeof ReminderGenerateResultSchema
  * 
  * In development and test environments (NODE_ENV !== "production"): AI endpoints are enabled.
  */
-export function checkAiEndpointAccess(customEnv?: {
-  NODE_ENV?: string;
-  ENABLE_PRODUCTION_AI?: string;
-}): {
+export function checkAiEndpointAccess(
+  customEnv?: {
+    NODE_ENV?: string;
+    ENABLE_PRODUCTION_AI?: string;
+  },
+  isAuthenticated = false
+): {
   allowed: boolean;
   statusCode: number;
   error?: string;
@@ -140,7 +172,10 @@ export function checkAiEndpointAccess(customEnv?: {
   const nodeEnv = customEnv?.NODE_ENV ?? process.env.NODE_ENV;
   const isProduction = nodeEnv === "production";
 
-  if (isProduction) {
+  // In production, unauthenticated AI requests are strictly blocked with 403 Forbidden.
+  // When verified Supabase user authentication is established (isAuthenticated === true),
+  // authenticated tenant AI requests are permitted.
+  if (isProduction && !isAuthenticated) {
     return {
       allowed: false,
       statusCode: 403,
@@ -392,30 +427,43 @@ export async function refundTenantAiQuota(
     endpoint?: string;
     credits?: number;
   }
-): Promise<void> {
+): Promise<{ success: boolean; error?: string }> {
   const credits = params.credits ?? 1;
   const isProduction = process.env.NODE_ENV === "production";
 
   if (supabaseClient && typeof supabaseClient.rpc === "function") {
     try {
-      await supabaseClient.rpc("refund_ai_quota", {
+      const { data, error } = await supabaseClient.rpc("refund_ai_quota", {
         p_business_id: params.businessId,
         p_user_id: params.userId,
         p_request_log_id: params.requestLogId ?? null,
         p_credits: credits,
       });
-      return;
-    } catch {
-      if (isProduction) {
-        console.error("Failed to execute refund_ai_quota RPC in production.");
-        return;
+
+      if (error) {
+        console.error("refund_ai_quota RPC error:", error.message);
+        return { success: false, error: error.message };
       }
+
+      if (data && data.success === false) {
+        console.error("refund_ai_quota refused:", data.error || data.code);
+        return { success: false, error: data.error || data.code };
+      }
+
+      return { success: true };
+    } catch (rpcErr) {
+      const errMsg = (rpcErr as Error)?.message || "RPC exception";
+      console.error("Failed to execute refund_ai_quota RPC:", errMsg);
+      return { success: false, error: errMsg };
     }
   }
 
   if (!isProduction) {
     refundMonthlyQuota(params.businessId, credits);
+    return { success: true };
   }
+
+  return { success: false, error: "Persistent AI quota refund unavailable in production" };
 }
 
 export function resetRateLimitStore(): void {
@@ -620,7 +668,10 @@ export async function callGroqChat(
  * Deterministic fallback parser for WhatsApp payment promise messages.
  * Used for automated unit tests and network error recovery.
  */
-export function fallbackParsePaymentPromise(messageText: string, referenceDate: string = "2026-11-21"): PaymentPromiseResult {
+export function fallbackParsePaymentPromise(
+  messageText: string,
+  referenceDate: string = new Date().toISOString().slice(0, 10)
+): PaymentPromiseResult {
   const text = messageText.trim();
   let promisedAmount: number | null = null;
   let promisedDate: string | null = null;
@@ -746,7 +797,7 @@ export function fallbackExtractPaymentScreenshot(): PaymentScreenshotResult {
     payerName: "Suresh Nair",
     receiverName: "Coaching Academy",
     amount: 6000,
-    transactionDate: "2026-11-21",
+    transactionDate: new Date().toISOString().slice(0, 10),
     paymentMethod: "Google Pay (UPI)",
     utrReference: "GPay/445892103847",
     confidenceScore: 0.95,

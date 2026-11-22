@@ -59,7 +59,8 @@ export function RecoverySmartActions({
       <CardContent className="p-4 sm:p-5 space-y-3">
         {urgentActions.map((item, idx) => {
           const isBroken = item.activePromise?.status === "broken";
-          const isDueToday = item.activePromise?.status === "pending" && item.activePromise.promisedDate === "2026-11-21";
+          const todayStr = new Date().toISOString().slice(0, 10);
+          const isDueToday = item.activePromise?.status === "pending" && item.activePromise.promisedDate === todayStr;
 
           return (
             <div

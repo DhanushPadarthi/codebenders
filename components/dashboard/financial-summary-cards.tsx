@@ -40,7 +40,6 @@ export interface FinancialSummaryCardsProps {
 export function FinancialSummaryCards(props: FinancialSummaryCardsProps) {
   const context = useFeePulse();
 
-  // If props are passed, use them; otherwise fallback to context
   const hasProps =
     props.totalOutstanding !== undefined ||
     props.monthlyCollected !== undefined ||
@@ -156,12 +155,12 @@ export function FinancialSummaryCards(props: FinancialSummaryCardsProps) {
         return (
           <Card
             key={idx}
-            className="hover:shadow-md transition-shadow duration-200 border-slate-200/90 relative overflow-hidden"
+            className="hover:shadow-md transition-shadow duration-200 border-slate-200/90 relative overflow-hidden group bg-white"
           >
             {/* Top decorative micro-accent line */}
             <div
               className={cn(
-                "absolute top-0 inset-x-0 h-1",
+                "absolute top-0 inset-x-0 h-1 transition-all",
                 isPositive && "bg-emerald-500",
                 isDanger && "bg-rose-500",
                 isWarning && "bg-amber-500",
@@ -171,12 +170,12 @@ export function FinancialSummaryCards(props: FinancialSummaryCardsProps) {
 
             <CardContent className="p-4 pt-4">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider truncate">
+                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider truncate">
                   {metric.title}
                 </span>
                 <div
                   className={cn(
-                    "p-1.5 rounded-lg border shrink-0",
+                    "p-1.5 rounded-xl border shrink-0 transition-colors",
                     isPositive && "bg-emerald-50 text-emerald-600 border-emerald-100",
                     isDanger && "bg-rose-50 text-rose-600 border-rose-100",
                     isWarning && "bg-amber-50 text-amber-600 border-amber-100",
@@ -188,7 +187,7 @@ export function FinancialSummaryCards(props: FinancialSummaryCardsProps) {
               </div>
 
               <div className="space-y-0.5">
-                <div className="text-xl font-bold tracking-tight text-slate-900 font-mono">
+                <div className="text-xl font-extrabold tracking-tight text-slate-900 font-mono tabular-nums">
                   {metric.isCurrency ? formatINR(metric.amount) : metric.amount}
                 </div>
                 <p className="text-[11px] text-slate-500 leading-tight truncate">
@@ -197,7 +196,7 @@ export function FinancialSummaryCards(props: FinancialSummaryCardsProps) {
               </div>
 
               {metric.trendText && (
-                <div className="mt-2.5 pt-2 border-t border-slate-100 flex items-center gap-1.5 text-[10px] font-medium truncate">
+                <div className="mt-2.5 pt-2 border-t border-slate-100/90 flex items-center gap-1.5 text-[10px] font-semibold truncate">
                   {isPositive && (
                     <ArrowUpRight className="w-3 h-3 text-emerald-600 shrink-0" />
                   )}
@@ -206,7 +205,7 @@ export function FinancialSummaryCards(props: FinancialSummaryCardsProps) {
                   )}
                   <span
                     className={cn(
-                      "truncate",
+                      "truncate tabular-nums",
                       isPositive && "text-emerald-700",
                       isDanger && "text-rose-700",
                       isWarning && "text-amber-700",

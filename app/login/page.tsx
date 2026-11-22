@@ -3,7 +3,7 @@
 import React, { useState, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Activity, Mail, Lock, Eye, EyeOff, ArrowRight, AlertCircle, Loader2 } from "lucide-react";
+import { Activity, Mail, Lock, Eye, EyeOff, ArrowRight, AlertCircle, Loader2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
 
@@ -21,7 +21,29 @@ function LoginForm() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [demoLoading, setDemoLoading] = useState(false);
   const [error, setError] = useState<string | null>(urlError);
+
+  const handleDemoLogin = async () => {
+    setError(null);
+    setDemoLoading(true);
+    try {
+      const res = await fetch("/api/auth/demo-login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.message || data.error || "Failed to start demo session.");
+      }
+      // Full page redirect to load server session cleanly
+      window.location.href = data.redirect || "/";
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Unable to launch live demo.";
+      setError(msg);
+      setDemoLoading(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -149,8 +171,8 @@ function LoginForm() {
 
         <Button
           type="submit"
-          disabled={loading}
-          className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl shadow-md shadow-emerald-600/20 gap-2 transition-all"
+          disabled={loading || demoLoading}
+          className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl shadow-md shadow-emerald-600/20 gap-2 transition-all cursor-pointer"
         >
           {loading ? (
             <>
@@ -165,6 +187,38 @@ function LoginForm() {
           )}
         </Button>
       </form>
+
+      {/* One-Click Judge & Public Demo Access */}
+      <div className="mt-6 pt-5 border-t border-slate-100">
+        <div className="p-3.5 rounded-xl bg-gradient-to-r from-emerald-50/80 via-teal-50/60 to-slate-50 border border-emerald-200/80 text-center">
+          <div className="flex items-center justify-center gap-1.5 text-xs font-bold text-emerald-950 mb-1">
+            <Sparkles className="w-4 h-4 text-emerald-600 shrink-0" />
+            Hackathon Judge & Public Demo
+          </div>
+          <p className="text-[11px] text-slate-500 mb-3 leading-relaxed">
+            Explore FeePulse with a preloaded demo academy and sample financial records. No registration required.
+          </p>
+          <Button
+            type="button"
+            onClick={handleDemoLogin}
+            disabled={loading || demoLoading}
+            variant="outline"
+            className="w-full py-2.5 bg-white hover:bg-emerald-50 text-emerald-700 hover:text-emerald-800 border-emerald-300 font-bold rounded-xl shadow-xs gap-2 transition-all cursor-pointer"
+          >
+            {demoLoading ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin text-emerald-600" />
+                Setting up Demo Workspace...
+              </>
+            ) : (
+              <>
+                Explore Live Demo
+                <ArrowRight className="w-4 h-4 text-emerald-600 stroke-[2.5]" />
+              </>
+            )}
+          </Button>
+        </div>
+      </div>
 
       {/* Switch to Signup */}
       <div className="mt-8 pt-6 border-t border-slate-100 text-center">

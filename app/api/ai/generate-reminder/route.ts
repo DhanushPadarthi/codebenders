@@ -21,19 +21,19 @@ export async function POST(req: NextRequest) {
   let requestLogId: string | undefined = undefined;
 
   try {
-    // 1. Production Access Guard (Disabled by default in production)
-    const accessCheck = checkAiEndpointAccess();
+    // 1. Server-side User Authentication Guard
+    const auth = await requireApiUser(req);
+    if (auth.errorResponse) {
+      return auth.errorResponse;
+    }
+
+    // 2. Production Access Guard (Requires verified authentication in production)
+    const accessCheck = checkAiEndpointAccess(undefined, Boolean(auth.user));
     if (!accessCheck.allowed) {
       return NextResponse.json(
         { error: accessCheck.error, message: accessCheck.message, code: accessCheck.code },
         { status: accessCheck.statusCode }
       );
-    }
-
-    // 2. Server-side User Authentication Guard
-    const auth = await requireApiUser(req);
-    if (auth.errorResponse) {
-      return auth.errorResponse;
     }
 
     supabaseClient = auth.supabase;
@@ -175,6 +175,8 @@ CRITICAL FINANCIAL INTEGRITY SAFEGUARDS:
 ${promiseStatus ? `- Promise Context: ${promiseStatus}` : ""}`;
 
     let generatedMessage = "";
+    let modelSuccess = false;
+    let failureDetail = "";
 
     try {
       const model = getGroqTextModel();
@@ -187,16 +189,39 @@ ${promiseStatus ? `- Promise Context: ${promiseStatus}` : ""}`;
         false
       );
       generatedMessage = aiResponse.trim();
-    } catch (err) {
-      console.warn("Groq text model call failed, falling back to deterministic template:", (err as Error).message);
-      // Deterministic fallback templates with dynamic business context
-      if (tone === "friendly") {
-        generatedMessage = `Dear ${parentName}, hope you and ${studentName} are having a great week! Just a gentle note that ${studentName}'s tuition fee of ${formattedAmount} (${invoicesText}) is due. Kindly arrange payment at your convenience via ${paymentInfo}. Thank you! - ${tutorName}, ${businessName}`;
-      } else if (tone === "firm") {
-        generatedMessage = `Dear ${parentName}, urgent reminder regarding the tuition fee of ${formattedAmount} for ${studentName} (${invoicesText}), which is now ${overdueDays} days overdue. We request immediate payment today via ${paymentInfo} to maintain active batch attendance and test evaluations. Thank you, ${tutorName}, ${businessName}`;
+      if (generatedMessage.length > 0) {
+        modelSuccess = true;
       } else {
-        generatedMessage = `Dear ${parentName}, this is a polite reminder from ${businessName} regarding the pending tuition fee for ${studentName}. Outstanding balance: ${formattedAmount} (${invoicesText}), currently ${overdueDays} days past due. Kindly clear the dues via ${paymentInfo}. If already paid, please share the transaction reference. Thank you.`;
+        failureDetail = "Model returned empty response";
       }
+    } catch (err) {
+      failureDetail = (err as Error).message || "Groq text model invocation failed";
+      console.warn("Groq text model call failed:", failureDetail);
+    }
+
+    if (!modelSuccess || !generatedMessage) {
+      if (quotaConsumed) {
+        const refundRes = await refundTenantAiQuota(supabaseClient, {
+          businessId,
+          userId,
+          requestLogId,
+          endpoint: "generate-reminder",
+          credits: 1,
+        });
+        if (!refundRes.success) {
+          console.error("Failed to refund AI quota:", refundRes.error);
+        }
+        quotaConsumed = false;
+      }
+
+      return NextResponse.json(
+        {
+          success: false,
+          error: "AI model operation failed",
+          message: `Unable to generate payment reminder: ${failureDetail}`,
+        },
+        { status: 502 }
+      );
     }
 
     const result: ReminderGenerateResult = {
@@ -212,13 +237,16 @@ ${promiseStatus ? `- Promise Context: ${promiseStatus}` : ""}`;
     });
   } catch (error) {
     if (quotaConsumed) {
-      await refundTenantAiQuota(supabaseClient, {
+      const refundRes = await refundTenantAiQuota(supabaseClient, {
         businessId,
         userId,
         requestLogId,
         endpoint: "generate-reminder",
         credits: 1,
-      }).catch(() => {});
+      });
+      if (!refundRes.success) {
+        console.error("Failed to refund AI quota:", refundRes.error);
+      }
     }
 
     console.error("Reminder generation endpoint error:", (error as Error).message);

@@ -17,6 +17,7 @@ interface PaymentDirectoryTableProps {
   payments: PaymentRecord[];
   onViewReceipt: (payment: PaymentRecord) => void;
   onRecordPaymentClick: () => void;
+  initialSearch?: string;
 }
 
 type MethodFilter = "ALL" | PaymentMode;
@@ -27,11 +28,20 @@ export function PaymentDirectoryTable({
   payments,
   onViewReceipt,
   onRecordPaymentClick,
+  initialSearch = "",
 }: PaymentDirectoryTableProps) {
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState(initialSearch);
   const [methodFilter, setMethodFilter] = useState<MethodFilter>("ALL");
   const [dateFilter, setDateFilter] = useState<DateFilter>("ALL");
   const [sortOption, setSortOption] = useState<SortOption>("DATE_DESC");
+  const [prevInitialSearch, setPrevInitialSearch] = useState(initialSearch);
+
+  if (initialSearch !== prevInitialSearch) {
+    setPrevInitialSearch(initialSearch);
+    if (initialSearch) {
+      setSearchQuery(initialSearch);
+    }
+  }
 
   const [{ todayStr, weekAgoStr, monthPrefix }] = useState(() => {
     const now = new Date();
@@ -96,32 +106,32 @@ export function PaymentDirectoryTable({
     switch (mode) {
       case "upi":
         return (
-          <Badge variant="outline" className="text-[10px] font-semibold bg-indigo-50 text-indigo-700 border-indigo-200">
+          <Badge variant="outline" className="text-[10px] font-bold bg-indigo-50 text-indigo-700 border-indigo-200">
             UPI
           </Badge>
         );
       case "cash":
         return (
-          <Badge variant="outline" className="text-[10px] font-semibold bg-emerald-50 text-emerald-700 border-emerald-200">
+          <Badge variant="outline" className="text-[10px] font-bold bg-emerald-50 text-emerald-700 border-emerald-200">
             Cash
           </Badge>
         );
       case "bank_transfer":
         return (
-          <Badge variant="outline" className="text-[10px] font-semibold bg-blue-50 text-blue-700 border-blue-200">
+          <Badge variant="outline" className="text-[10px] font-bold bg-blue-50 text-blue-700 border-blue-200">
             Bank Transfer / NEFT
           </Badge>
         );
       case "cheque":
         return (
-          <Badge variant="outline" className="text-[10px] font-semibold bg-amber-50 text-amber-700 border-amber-200">
+          <Badge variant="outline" className="text-[10px] font-bold bg-amber-50 text-amber-700 border-amber-200">
             Cheque
           </Badge>
         );
       case "other":
       default:
         return (
-          <Badge variant="outline" className="text-[10px] font-semibold bg-slate-100 text-slate-700 border-slate-200">
+          <Badge variant="outline" className="text-[10px] font-bold bg-slate-100 text-slate-700 border-slate-200">
             Other
           </Badge>
         );
@@ -133,65 +143,56 @@ export function PaymentDirectoryTable({
   return (
     <div className="space-y-4">
       {/* Search & Filter Bar */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 bg-white p-3.5 rounded-xl border border-slate-200 shadow-2xs">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 bg-white p-4 rounded-2xl border border-slate-200/90 shadow-2xs">
         {/* Search Input */}
         <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
           <input
             type="text"
-            placeholder="Search by student, invoice #, receipt #, or UTR..."
+            placeholder="Search by student, parent, receipt #, or UTR..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-8 py-2 text-xs rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-slate-900 bg-white placeholder:text-slate-400"
+            className="w-full text-xs rounded-xl border border-slate-200/90 bg-slate-50/50 pl-10 pr-3.5 py-2.5 text-slate-900 placeholder:text-slate-400 focus:outline-hidden focus:ring-2 focus:ring-slate-900 focus:bg-white transition-all font-medium"
           />
-          {searchQuery && (
-            <button
-              onClick={() => setSearchQuery("")}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-            >
-              <X className="w-3.5 h-3.5" />
-            </button>
-          )}
         </div>
 
-        {/* Filter Badges & Sorters */}
-        <div className="flex items-center gap-2 flex-wrap">
+        {/* Filters Group */}
+        <div className="flex items-center gap-2 flex-wrap text-xs">
           {/* Method Filter */}
           <select
             value={methodFilter}
             onChange={(e) => setMethodFilter(e.target.value as MethodFilter)}
-            className="text-xs rounded-lg border border-slate-200 px-2.5 py-1.5 bg-white text-slate-700 font-medium focus:outline-none focus:ring-2 focus:ring-slate-900"
+            className="text-xs rounded-xl border border-slate-200/90 bg-white px-3 py-2 text-slate-700 focus:outline-hidden focus:ring-2 focus:ring-slate-900 font-semibold cursor-pointer shadow-2xs"
           >
             <option value="ALL">All Methods</option>
             <option value="upi">UPI</option>
             <option value="cash">Cash</option>
             <option value="bank_transfer">Bank Transfer / NEFT</option>
             <option value="cheque">Cheque</option>
-            <option value="other">Other</option>
           </select>
 
           {/* Date Filter */}
           <select
             value={dateFilter}
             onChange={(e) => setDateFilter(e.target.value as DateFilter)}
-            className="text-xs rounded-lg border border-slate-200 px-2.5 py-1.5 bg-white text-slate-700 font-medium focus:outline-none focus:ring-2 focus:ring-slate-900"
+            className="text-xs rounded-xl border border-slate-200/90 bg-white px-3 py-2 text-slate-700 focus:outline-hidden focus:ring-2 focus:ring-slate-900 font-semibold cursor-pointer shadow-2xs"
           >
-            <option value="ALL">All Dates</option>
+            <option value="ALL">All Time</option>
             <option value="TODAY">Today</option>
             <option value="WEEK">Last 7 Days</option>
             <option value="MONTH">This Month</option>
           </select>
 
-          {/* Sorter */}
+          {/* Sort Option */}
           <select
             value={sortOption}
             onChange={(e) => setSortOption(e.target.value as SortOption)}
-            className="text-xs rounded-lg border border-slate-200 px-2.5 py-1.5 bg-white text-slate-700 font-medium focus:outline-none focus:ring-2 focus:ring-slate-900"
+            className="text-xs rounded-xl border border-slate-200/90 bg-white px-3 py-2 text-slate-700 focus:outline-hidden focus:ring-2 focus:ring-slate-900 font-semibold cursor-pointer shadow-2xs"
           >
-            <option value="DATE_DESC">Date (Newest First)</option>
-            <option value="DATE_ASC">Date (Oldest First)</option>
-            <option value="AMOUNT_DESC">Amount (High to Low)</option>
-            <option value="AMOUNT_ASC">Amount (Low to High)</option>
+            <option value="DATE_DESC">Newest Date</option>
+            <option value="DATE_ASC">Oldest Date</option>
+            <option value="AMOUNT_DESC">Highest Amount</option>
+            <option value="AMOUNT_ASC">Lowest Amount</option>
           </select>
 
           {hasActiveFilters && (
@@ -203,142 +204,140 @@ export function PaymentDirectoryTable({
                 setMethodFilter("ALL");
                 setDateFilter("ALL");
               }}
-              className="text-xs h-8 px-2 text-slate-500 hover:text-slate-800"
+              className="h-8 px-2.5 text-xs text-slate-500 hover:text-slate-900 gap-1 font-semibold"
             >
-              Reset
+              <X className="w-3.5 h-3.5" />
+              <span>Reset</span>
             </Button>
           )}
         </div>
       </div>
 
-      {/* Main Table */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-2xs overflow-hidden">
-        {filteredPayments.length === 0 ? (
-          <div className="p-12 text-center space-y-3">
-            <div className="w-12 h-12 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mx-auto">
-              <CreditCard className="w-6 h-6" />
-            </div>
-            {payments.length === 0 ? (
-              <div className="max-w-md mx-auto space-y-2">
-                <h3 className="font-bold text-slate-900 text-base">No payments recorded yet</h3>
-                <p className="text-xs text-slate-500 leading-relaxed">
-                  Record tuition fees received via UPI, cash, bank transfer, or cheque against issued student invoices.
-                </p>
-                <div className="pt-2">
-                  <Button
-                    onClick={onRecordPaymentClick}
-                    size="sm"
-                    className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs gap-1.5"
-                  >
-                    <Plus className="w-3.5 h-3.5" />
-                    <span>Record First Payment</span>
-                  </Button>
-                </div>
-              </div>
-            ) : (
-              <div className="max-w-md mx-auto space-y-2">
-                <h3 className="font-bold text-slate-900 text-sm">No matching payments found</h3>
-                <p className="text-xs text-slate-500">
-                  Try adjusting your search query, payment method, or date filter range.
-                </p>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    setSearchQuery("");
-                    setMethodFilter("ALL");
-                    setDateFilter("ALL");
-                  }}
-                  className="text-xs h-7 mt-1"
-                >
-                  Clear Filters
-                </Button>
-              </div>
-            )}
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse text-xs">
-              <thead>
-                <tr className="border-b border-slate-200 bg-slate-50/70 text-slate-500 font-bold uppercase tracking-wider text-[10px]">
-                  <th className="py-3 px-4">Receipt # / Date</th>
-                  <th className="py-3 px-4">Student & Batch</th>
-                  <th className="py-3 px-4">Invoice #</th>
-                  <th className="py-3 px-4">Payment Method</th>
-                  <th className="py-3 px-4">Reference / UTR</th>
-                  <th className="py-3 px-4 text-right">Amount Paid</th>
-                  <th className="py-3 px-4 text-center">Action</th>
+      {/* Directory Table */}
+      <div className="rounded-2xl border border-slate-200/90 overflow-hidden bg-white shadow-2xs">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-xs text-slate-600">
+            <thead className="bg-slate-50/80 text-slate-500 font-bold border-b border-slate-200 uppercase tracking-wider text-[11px]">
+              <tr>
+                <th className="py-3 px-4">Receipt #</th>
+                <th className="py-3 px-4">Student &amp; Batch</th>
+                <th className="py-3 px-4">Invoice #</th>
+                <th className="py-3 px-4">Payment Method</th>
+                <th className="py-3 px-4">Payment Date</th>
+                <th className="py-3 px-4 text-right">Amount</th>
+                <th className="py-3 px-4 text-right">Receipt</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {filteredPayments.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="py-16 px-4 text-center">
+                    <div className="max-w-md mx-auto space-y-3">
+                      <div className="w-12 h-12 rounded-2xl bg-slate-100 text-slate-400 mx-auto flex items-center justify-center">
+                        <CreditCard className="w-6 h-6" />
+                      </div>
+                      <h4 className="text-base font-bold text-slate-900">
+                        {hasActiveFilters ? "No matching payment records" : "No payments recorded yet"}
+                      </h4>
+                      <p className="text-xs text-slate-500 leading-relaxed font-medium">
+                        {hasActiveFilters
+                          ? "Try clearing your filters or searching with a different student name or UTR reference."
+                          : "Record your first student fee settlement. Settle invoice balances via UPI, cash, cheque or direct bank transfers."}
+                      </p>
+                      <div className="pt-2">
+                        {hasActiveFilters ? (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setSearchQuery("");
+                              setMethodFilter("ALL");
+                              setDateFilter("ALL");
+                            }}
+                            className="text-xs font-semibold"
+                          >
+                            Reset Filters
+                          </Button>
+                        ) : (
+                          <Button
+                            onClick={onRecordPaymentClick}
+                            size="sm"
+                            className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold gap-1.5 shadow-xs"
+                          >
+                            <Plus className="w-4 h-4" />
+                            <span>Record First Payment</span>
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  </td>
                 </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {filteredPayments.map((payment) => (
-                  <tr
-                    key={payment.id}
-                    className="hover:bg-slate-50/80 transition-colors group cursor-pointer"
-                    onClick={() => onViewReceipt(payment)}
-                  >
-                    {/* Receipt Number & Date */}
-                    <td className="py-3 px-4">
-                      <div className="font-mono font-bold text-slate-900 group-hover:text-emerald-700 transition-colors">
-                        {payment.receiptNumber}
-                      </div>
-                      <div className="text-[11px] text-slate-500 mt-0.5">
-                        {formatDate(payment.paymentDate)}
-                      </div>
+              ) : (
+                filteredPayments.map((p) => (
+                  <tr key={p.id} className="hover:bg-slate-50/80 transition-colors group">
+                    {/* Receipt Number */}
+                    <td className="py-3.5 px-4 font-mono font-bold text-slate-900 tabular-nums">
+                      {p.receiptNumber}
                     </td>
 
-                    {/* Student Name & Grade */}
-                    <td className="py-3 px-4">
-                      <div className="font-bold text-slate-900">{payment.customerName}</div>
-                      <div className="text-[11px] text-slate-500 mt-0.5">
-                        {payment.customerGrade}
-                        {payment.parentName ? ` • ${payment.parentName}` : ""}
-                      </div>
-                    </td>
-
-                    {/* Invoice Link */}
-                    <td className="py-3 px-4">
-                      <span className="font-mono font-semibold text-indigo-700 bg-indigo-50/80 px-2 py-0.5 rounded border border-indigo-100">
-                        {payment.invoiceNumber}
+                    {/* Student Name */}
+                    <td className="py-3.5 px-4">
+                      <span className="font-bold text-slate-900 block group-hover:text-indigo-600 transition-colors">
+                        {p.customerName}
                       </span>
+                      <span className="text-[11px] text-slate-500 font-medium">
+                        Parent: {p.parentName}
+                      </span>
+                    </td>
+
+                    {/* Invoice Reference */}
+                    <td className="py-3.5 px-4 font-mono font-semibold text-slate-700 tabular-nums">
+                      {p.invoiceNumber}
                     </td>
 
                     {/* Payment Mode */}
-                    <td className="py-3 px-4">
-                      {getMethodBadge(payment.paymentMode)}
-                    </td>
+                    <td className="py-3.5 px-4">{getMethodBadge(p.paymentMode)}</td>
 
-                    {/* Reference / UTR */}
-                    <td className="py-3 px-4">
-                      <span className="font-mono text-slate-600 text-[11px]">
-                        {payment.referenceId}
-                      </span>
+                    {/* Payment Date */}
+                    <td className="py-3.5 px-4 text-slate-600 tabular-nums font-medium">
+                      {formatDate(p.paymentDate, "short")}
                     </td>
 
                     {/* Amount */}
-                    <td className="py-3 px-4 text-right">
-                      <span className="font-mono font-bold text-emerald-700 text-sm">
-                        {formatINR(payment.amount)}
-                      </span>
+                    <td className="py-3.5 px-4 text-right font-mono font-bold text-emerald-700 text-sm tabular-nums">
+                      +{formatINR(p.amount)}
                     </td>
 
-                    {/* Action */}
-                    <td className="py-3 px-4 text-center" onClick={(e) => e.stopPropagation()}>
+                    {/* Action: Print Receipt */}
+                    <td className="py-3.5 px-4 text-right">
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => onViewReceipt(payment)}
-                        className="h-7 px-2 text-xs text-slate-600 hover:text-slate-900 gap-1"
-                        title="Print Receipt Slip"
+                        onClick={() => onViewReceipt(p)}
+                        className="h-7 px-2.5 text-xs text-slate-600 hover:text-slate-900 gap-1.5 font-semibold"
+                        title="Print / View Receipt"
                       >
-                        <Printer className="w-3.5 h-3.5" />
+                        <Printer className="w-3.5 h-3.5 text-slate-500" />
                         <span className="hidden sm:inline">Receipt</span>
                       </Button>
                     </td>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Table Footer */}
+        {payments.length > 0 && (
+          <div className="p-3.5 bg-slate-50/70 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-500 font-medium">
+            <span className="tabular-nums">
+              Showing <strong className="text-slate-800 font-bold">{filteredPayments.length}</strong> of{" "}
+              <strong className="text-slate-800 font-bold">{payments.length}</strong> payments
+            </span>
+            <span className="text-[11px] text-slate-400">
+              Each recorded payment is permanently stamped with integer paise accuracy and idempotent receipt tracking.
+            </span>
           </div>
         )}
       </div>

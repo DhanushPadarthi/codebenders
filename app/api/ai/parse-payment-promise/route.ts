@@ -6,12 +6,12 @@ import {
   getGroqTextModel,
   PaymentPromiseResult,
   PaymentPromiseResultSchema,
-  fallbackParsePaymentPromise,
   checkAiEndpointAccess,
   consumeTenantAiQuota,
   refundTenantAiQuota,
   getClientIdentifier,
   parseAndValidateJsonBody,
+  fallbackParsePaymentPromise,
 } from "@/lib/ai/groq-client";
 
 export async function POST(req: NextRequest) {
@@ -23,19 +23,19 @@ export async function POST(req: NextRequest) {
   let requestLogId: string | undefined = undefined;
 
   try {
-    // 1. Production Access Guard (Disabled by default in production)
-    const accessCheck = checkAiEndpointAccess();
+    // 1. Server-side User Authentication Guard
+    const auth = await requireApiUser(req);
+    if (auth.errorResponse) {
+      return auth.errorResponse;
+    }
+
+    // 2. Production Access Guard (Requires verified authentication in production)
+    const accessCheck = checkAiEndpointAccess(undefined, Boolean(auth.user));
     if (!accessCheck.allowed) {
       return NextResponse.json(
         { error: accessCheck.error, message: accessCheck.message, code: accessCheck.code },
         { status: accessCheck.statusCode }
       );
-    }
-
-    // 2. Server-side User Authentication Guard
-    const auth = await requireApiUser(req);
-    if (auth.errorResponse) {
-      return auth.errorResponse;
     }
 
     supabaseClient = auth.supabase;
@@ -73,7 +73,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { messageText, referenceDate = "2026-11-21" } = parseResult.data;
+    const todayDate = new Date().toISOString().slice(0, 10);
+    const { messageText, referenceDate = todayDate } = parseResult.data;
 
     // 5. Atomic Quota Consumption & Distributed Rate Limiting (PostgreSQL backed with in-memory fallback)
     const quotaCheck = await consumeTenantAiQuota(supabaseClient, {
@@ -135,7 +136,9 @@ Parent Message to parse:
 ${messageText}
 """`;
 
-    let extractedData: PaymentPromiseResult;
+    let modelSuccess = false;
+    let extractedData: PaymentPromiseResult | null = null;
+    let failureDetail = "";
 
     try {
       const model = getGroqTextModel();
@@ -153,15 +156,42 @@ ${messageText}
 
       if (validated.success) {
         extractedData = validated.data;
+        modelSuccess = true;
       } else {
-        // Fallback to deterministic parser if model JSON format drifted
-        extractedData = fallbackParsePaymentPromise(messageText, referenceDate);
-        extractedData.clarificationReason = (extractedData.clarificationReason ? extractedData.clarificationReason + "; " : "") + "Format validated via fallback parser";
+        failureDetail = "Model output schema validation failed";
+        throw new Error("Payment promise schema validation failed: " + validated.error.message);
       }
     } catch (apiError) {
-      // In development/test mode or network degradation, fall back gracefully
-      console.warn("Groq API call degraded, using deterministic parser:", (apiError as Error).message);
+      failureDetail = (apiError as Error).message || "AI model invocation failed";
+      console.warn("Groq API call failed:", failureDetail);
+      console.log("Using deterministic fallback parser for payment promise recovery");
       extractedData = fallbackParsePaymentPromise(messageText, referenceDate);
+      modelSuccess = true;
+    }
+
+    if (!modelSuccess || !extractedData) {
+      if (quotaConsumed) {
+        const refundRes = await refundTenantAiQuota(supabaseClient, {
+          businessId,
+          userId,
+          requestLogId,
+          endpoint: "parse-payment-promise",
+          credits: 1,
+        });
+        if (!refundRes.success) {
+          console.error("Failed to refund AI quota:", refundRes.error);
+        }
+        quotaConsumed = false;
+      }
+
+      return NextResponse.json(
+        {
+          success: false,
+          error: "AI model operation failed",
+          message: `Unable to extract payment promise: ${failureDetail}`,
+        },
+        { status: 502 }
+      );
     }
 
     return NextResponse.json({
@@ -171,15 +201,17 @@ ${messageText}
       disclaimer: "Draft extraction only. Requires explicit tutor confirmation before recording.",
     });
   } catch (error) {
-    // If request failed after quota was consumed, refund credit
     if (quotaConsumed) {
-      await refundTenantAiQuota(supabaseClient, {
+      const refundRes = await refundTenantAiQuota(supabaseClient, {
         businessId,
         userId,
         requestLogId,
         endpoint: "parse-payment-promise",
         credits: 1,
-      }).catch(() => {});
+      });
+      if (!refundRes.success) {
+        console.error("Failed to refund AI quota:", refundRes.error);
+      }
     }
 
     console.error("Payment promise endpoint error:", (error as Error).message);

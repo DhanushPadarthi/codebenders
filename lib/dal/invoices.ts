@@ -52,6 +52,14 @@ export interface InvoiceRecord {
   items: InvoiceItemRecord[];
 }
 
+export const isValidCurrencyPrecision = (val: number): boolean => {
+  if (typeof val !== 'number' || isNaN(val) || !isFinite(val)) return false;
+  const str = val.toString();
+  if (str.includes('e') || str.includes('E')) return false;
+  const decimalPart = str.split('.')[1];
+  return !decimalPart || decimalPart.length <= 2;
+};
+
 export const LineItemSchema = z.object({
   description: z
     .string()
@@ -60,10 +68,12 @@ export const LineItemSchema = z.object({
     .max(200, 'Description cannot exceed 200 characters'),
   quantity: z
     .number({ invalid_type_error: 'Quantity must be a number' })
-    .positive('Quantity must be greater than zero'),
+    .positive('Quantity must be greater than zero')
+    .refine(isValidCurrencyPrecision, 'Quantity cannot exceed 2 decimal places'),
   unitPrice: z
     .number({ invalid_type_error: 'Unit price must be a number' })
-    .min(0, 'Unit price cannot be negative'),
+    .min(0, 'Unit price cannot be negative')
+    .refine(isValidCurrencyPrecision, 'Unit price cannot have more than 2 decimal places'),
 });
 
 export const CreateInvoiceSchema = z
@@ -84,6 +94,7 @@ export const CreateInvoiceSchema = z
     discount: z
       .number({ invalid_type_error: 'Discount must be a number' })
       .min(0, 'Discount cannot be negative')
+      .refine(isValidCurrencyPrecision, 'Discount cannot have more than 2 decimal places')
       .default(0),
     notes: z
       .string()
@@ -110,7 +121,11 @@ export const UpdateDraftInvoiceSchema = z
       .string()
       .regex(/^\d{4}-\d{2}-\d{2}$/)
       .optional(),
-    discount: z.number().min(0).optional(),
+    discount: z
+      .number()
+      .min(0)
+      .refine(isValidCurrencyPrecision, 'Discount cannot have more than 2 decimal places')
+      .optional(),
     notes: z
       .string()
       .trim()
@@ -477,13 +492,7 @@ export async function createInvoice(
     throw new Error('Selected student does not exist or does not belong to your academy.');
   }
 
-  // 2. Resolve invoice number
-  let invoiceNumber = validated.invoiceNumber;
-  if (!invoiceNumber) {
-    invoiceNumber = await generateNextInvoiceNumber(supabase, businessId);
-  }
-
-  // 3. Precalculate totals in integer paise
+  // 2. Precalculate totals in integer paise
   const lineItemTotals = validated.items.map((it) => ({
     description: it.description,
     quantity: it.quantity,
@@ -493,32 +502,92 @@ export async function createInvoice(
 
   const totals = calculateInvoiceTotals(lineItemTotals, validated.discount, 0);
 
-  // 4. Insert draft invoice
-  const { data: createdInv, error: insertInvErr } = await supabase
-    .from('invoices')
-    .insert({
-      business_id: businessId,
-      customer_id: validated.customerId,
-      invoice_number: invoiceNumber,
-      issue_date: validated.issueDate,
-      due_date: validated.dueDate,
-      subtotal: totals.subtotal,
-      discount: totals.discount,
-      total_amount: totals.totalAmount,
-      status: 'draft',
-      notes: validated.notes || null,
-    })
-    .select('*')
-    .single();
-
-  if (insertInvErr || !createdInv) {
-    throw new Error(`Failed to create invoice: ${insertInvErr?.message || 'Database error'}`);
+  // 3. Attempt database-level atomic creation via RPC public.create_invoice_with_items()
+  let targetInvoiceNumber = validated.invoiceNumber;
+  if (!targetInvoiceNumber) {
+    targetInvoiceNumber = await generateNextInvoiceNumber(supabase, businessId);
   }
 
-  // 5. Insert line items
+  const { data: rpcData, error: rpcErr } = await supabase.rpc('create_invoice_with_items', {
+    p_customer_id: validated.customerId,
+    p_invoice_number: targetInvoiceNumber,
+    p_issue_date: validated.issueDate,
+    p_due_date: validated.dueDate,
+    p_discount: totals.discount,
+    p_notes: validated.notes || null,
+    p_items: lineItemTotals.map((it) => ({
+      description: it.description,
+      quantity: it.quantity,
+      unit_price: it.unitPrice,
+    })),
+    p_status: validated.status || 'draft',
+  });
+
+  if (!rpcErr && rpcData) {
+    const res = rpcData as { success: boolean; invoice_id: string };
+    return getInvoiceById(supabase, businessId, res.invoice_id) as Promise<InvoiceRecord>;
+  }
+
+  const isRpcMissing =
+    rpcErr?.code === 'PGRST202' ||
+    rpcErr?.code === '42883' ||
+    rpcErr?.message?.includes('function public.create_invoice_with_items') ||
+    rpcErr?.message?.includes('does not exist');
+
+  if (rpcErr && !isRpcMissing) {
+    throw new Error(`Failed to create invoice: ${rpcErr.message}`);
+  }
+
+  // Fallback: Two-phase creation with retry loop & compensating rollback
+  let createdInv: InvoiceRawRow | null = null;
+  let attempts = 0;
+  const maxAttempts = validated.invoiceNumber ? 1 : 3;
+
+  while (attempts < maxAttempts) {
+    attempts++;
+    let invoiceNumber = validated.invoiceNumber;
+    if (!invoiceNumber) {
+      invoiceNumber = await generateNextInvoiceNumber(supabase, businessId);
+    }
+
+    const { data: invData, error: insertInvErr } = await supabase
+      .from('invoices')
+      .insert({
+        business_id: businessId,
+        customer_id: validated.customerId,
+        invoice_number: invoiceNumber,
+        issue_date: validated.issueDate,
+        due_date: validated.dueDate,
+        subtotal: totals.subtotal,
+        discount: totals.discount,
+        total_amount: totals.totalAmount,
+        status: 'draft',
+        notes: validated.notes || null,
+      })
+      .select('*')
+      .single();
+
+    if (insertInvErr) {
+      // If race condition on auto-generated invoice number, retry with fresh sequence
+      const isUniqueConflict = insertInvErr.code === '23505' || insertInvErr.message?.includes('uk_business_invoice_number');
+      if (!validated.invoiceNumber && isUniqueConflict && attempts < maxAttempts) {
+        continue;
+      }
+      throw new Error(`Failed to create invoice: ${insertInvErr.message || 'Database error'}`);
+    }
+
+    createdInv = invData as InvoiceRawRow;
+    break;
+  }
+
+  if (!createdInv) {
+    throw new Error('Failed to create invoice after numbering attempts.');
+  }
+
+  // 4. Insert line items
   const itemPayloads = lineItemTotals.map((it) => ({
     business_id: businessId,
-    invoice_id: createdInv.id,
+    invoice_id: createdInv!.id,
     description: it.description,
     quantity: it.quantity,
     unit_price: it.unitPrice,
@@ -531,16 +600,21 @@ export async function createInvoice(
     .select('*');
 
   if (itemsErr || !createdItems) {
-    // Rollback protection: Soft-delete the draft invoice so no orphan header is left
+    // Atomic rollback: Clean up newly created invoice header so no orphan header is left
     try {
-      await supabase.rpc('soft_delete_invoice', { p_invoice_id: createdInv.id });
+      await supabase.from('invoice_items').delete().eq('invoice_id', createdInv.id);
+      await supabase.from('invoices').delete().eq('id', createdInv.id);
     } catch {
-      // Ignore cleanup error if already missing
+      try {
+        await supabase.rpc('soft_delete_invoice', { p_invoice_id: createdInv.id });
+      } catch {
+        // Ignored in rollback fallback
+      }
     }
     throw new Error(`Failed to save invoice line items: ${itemsErr?.message || 'Database error'}`);
   }
 
-  // 6. If target status is 'sent', transition using approved database RPC
+  // 5. If target status is 'sent', transition using approved database RPC
   if (validated.status === 'sent') {
     const { error: transErr } = await supabase.rpc('transition_invoice_status', {
       p_invoice_id: createdInv.id,
@@ -548,11 +622,22 @@ export async function createInvoice(
     });
 
     if (transErr) {
-      console.warn('transition_invoice_status warning on create:', transErr.message);
+      // Atomic rollback: clean up the created invoice so an inconsistent draft is NOT left behind when user requested sent
+      try {
+        await supabase.from('invoice_items').delete().eq('invoice_id', createdInv.id);
+        await supabase.from('invoices').delete().eq('id', createdInv.id);
+      } catch {
+        try {
+          await supabase.rpc('soft_delete_invoice', { p_invoice_id: createdInv.id });
+        } catch {
+          // Ignored in rollback fallback
+        }
+      }
+      throw new Error(`Failed to finalize and send invoice: ${transErr.message}`);
     }
   }
 
-  // 7. Return complete fresh invoice record
+  // 6. Return complete fresh invoice record
   return getInvoiceById(supabase, businessId, createdInv.id) as Promise<InvoiceRecord>;
 }
 
@@ -579,9 +664,23 @@ export async function updateDraftInvoice(
     throw new Error(`Invoice is ${currentInv.status}. Only draft invoices can be edited.`);
   }
 
-  // 2. Update invoice header columns permitted by column grants
+  // 2. Validate customer ownership if customerId is being updated
   const updatePayload: Record<string, unknown> = {};
-  if (validated.customerId) updatePayload.customer_id = validated.customerId;
+  if (validated.customerId) {
+    const { data: customer, error: custErr } = await supabase
+      .from('customers')
+      .select('id')
+      .eq('id', validated.customerId)
+      .eq('business_id', businessId)
+      .is('deleted_at', null)
+      .single();
+
+    if (custErr || !customer) {
+      throw new Error('Selected student does not exist or does not belong to your academy.');
+    }
+    updatePayload.customer_id = validated.customerId;
+  }
+
   if (validated.issueDate) updatePayload.issue_date = validated.issueDate;
   if (validated.dueDate) updatePayload.due_date = validated.dueDate;
   if (validated.discount !== undefined) updatePayload.discount = validated.discount;
@@ -599,8 +698,24 @@ export async function updateDraftInvoice(
     }
   }
 
-  // 3. If line items are provided, replace existing draft line items
+  // 3. If line items are provided, replace existing draft line items atomically
   if (validated.items && validated.items.length > 0) {
+    // Snapshot existing items first so they can be restored if replacement fails
+    const { data: existingItems } = await supabase
+      .from('invoice_items')
+      .select('*')
+      .eq('invoice_id', invoiceId)
+      .eq('business_id', businessId);
+
+    const newItemsPayload = validated.items.map((it) => ({
+      business_id: businessId,
+      invoice_id: invoiceId,
+      description: it.description,
+      quantity: it.quantity,
+      unit_price: it.unitPrice,
+      total_price: calculateLineTotal(it.quantity, it.unitPrice),
+    }));
+
     // Delete old items
     const { error: delErr } = await supabase
       .from('invoice_items')
@@ -613,20 +728,27 @@ export async function updateDraftInvoice(
     }
 
     // Insert new items
-    const newItemsPayload = validated.items.map((it) => ({
-      business_id: businessId,
-      invoice_id: invoiceId,
-      description: it.description,
-      quantity: it.quantity,
-      unit_price: it.unitPrice,
-      total_price: calculateLineTotal(it.quantity, it.unitPrice),
-    }));
-
     const { error: insertItemsErr } = await supabase
       .from('invoice_items')
       .insert(newItemsPayload);
 
     if (insertItemsErr) {
+      // Compensating recovery: restore original items so draft is not left corrupted with 0 items
+      if (existingItems && existingItems.length > 0) {
+        const restorePayload = existingItems.map((old) => ({
+          business_id: old.business_id,
+          invoice_id: old.invoice_id,
+          description: old.description,
+          quantity: old.quantity,
+          unit_price: old.unit_price,
+          total_price: old.total_price,
+        }));
+        try {
+          await supabase.from('invoice_items').insert(restorePayload);
+        } catch {
+          // Ignored in rollback fallback
+        }
+      }
       throw new Error(`Failed to insert updated line items: ${insertItemsErr.message}`);
     }
   }
@@ -644,20 +766,43 @@ export async function transitionInvoiceStatus(
   invoiceId: string,
   newStatus: 'sent' | 'cancelled'
 ): Promise<{ success: boolean; status: string; previousStatus: string }> {
+  // Validate target status runtime parameter
+  if (newStatus !== 'sent' && newStatus !== 'cancelled') {
+    throw new Error(`Invalid status transition to "${newStatus}". Allowed transitions are "sent" or "cancelled".`);
+  }
+
+  // Validate current invoice status before transition
+  const invoice = await getInvoiceById(supabase, businessId, invoiceId);
+  if (!invoice) {
+    throw new Error('Invoice not found.');
+  }
+
+  if (newStatus === 'sent' && invoice.status !== 'draft') {
+    throw new Error(`Cannot transition invoice in "${invoice.status}" status to "sent". Only draft invoices can be sent.`);
+  }
+
+  if (newStatus === 'cancelled') {
+    if (invoice.amountPaid > 0) {
+      throw new Error(`Cannot cancel invoice with recorded payments totaling ₹${invoice.amountPaid}.`);
+    }
+    if (invoice.status === 'paid' || invoice.status === 'partially_paid') {
+      throw new Error(`Cannot cancel ${invoice.status} invoice.`);
+    }
+  }
+
   const { data, error } = await supabase.rpc('transition_invoice_status', {
     p_invoice_id: invoiceId,
     p_new_status: newStatus,
   });
 
-  if (error) {
-    throw new Error(`Failed to transition invoice status: ${error.message}`);
+  if (error || !data) {
+    throw new Error(`Failed to transition invoice status: ${error?.message || 'RPC failed'}`);
   }
 
-  const resultData = data as { status?: string; previous_status?: string } | null;
   return {
     success: true,
-    status: resultData?.status || newStatus,
-    previousStatus: resultData?.previous_status || '',
+    status: data.status,
+    previousStatus: data.previous_status,
   };
 }
 

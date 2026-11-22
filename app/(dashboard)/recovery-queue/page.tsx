@@ -3,8 +3,6 @@ import { getBusinessContext } from "@/lib/auth/get-business-context";
 import { getRecoveryQueueData } from "@/lib/dal/recovery";
 import { RecoveryClientView } from "@/components/recovery/recovery-client-view";
 
-export const instant = false;
-
 export default async function RecoveryQueuePage() {
   const { supabase } = await requireUser();
   const context = await getBusinessContext();

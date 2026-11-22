@@ -1,7 +1,8 @@
 'use server';
 
+import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
-import { requireUser } from '@/lib/auth/require-user';
+import { requireUser, handleActionError } from '@/lib/auth/require-user';
 import { getBusinessContext } from '@/lib/auth/get-business-context';
 import {
   getCustomers,
@@ -39,9 +40,8 @@ export async function getCustomersAction(options?: {
     const customers = await getCustomers(supabase, context.business.id, options);
     return { success: true, data: customers };
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Failed to retrieve customers.';
-    console.error('getCustomersAction error:', message);
-    return { success: false, error: message };
+    console.error('getCustomersAction error:', err);
+    return handleActionError(err, 'Failed to retrieve customers.');
   }
 }
 
@@ -79,9 +79,8 @@ export async function createCustomerAction(
 
     return { success: true, data: newCustomer };
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Failed to enroll student.';
-    console.error('createCustomerAction error:', message);
-    return { success: false, error: message };
+    console.error('createCustomerAction error:', err);
+    return handleActionError(err, 'Failed to enroll student.');
   }
 }
 
@@ -93,15 +92,15 @@ export async function updateCustomerAction(
   input: UpdateCustomerInput
 ): Promise<ActionResult<CustomerRecord>> {
   try {
+    if (!z.string().uuid().safeParse(id).success) {
+      return { success: false, error: 'Invalid customer ID provided.' };
+    }
+
     const { supabase } = await requireUser();
     const context = await getBusinessContext();
 
     if (!context.business) {
       return { success: false, error: 'No active business profile found for this account.' };
-    }
-
-    if (!id || typeof id !== 'string') {
-      return { success: false, error: 'Invalid customer ID provided.' };
     }
 
     const validation = UpdateCustomerSchema.safeParse(input);
@@ -124,9 +123,8 @@ export async function updateCustomerAction(
 
     return { success: true, data: updated };
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Failed to update student.';
-    console.error('updateCustomerAction error:', message);
-    return { success: false, error: message };
+    console.error('updateCustomerAction error:', err);
+    return handleActionError(err, 'Failed to update student.');
   }
 }
 
@@ -138,6 +136,10 @@ export async function archiveCustomerAction(
   id: string
 ): Promise<ActionResult<{ id: string }>> {
   try {
+    if (!z.string().uuid().safeParse(id).success) {
+      return { success: false, error: 'Invalid customer ID provided.' };
+    }
+
     const { supabase } = await requireUser();
     const context = await getBusinessContext();
 
@@ -145,17 +147,12 @@ export async function archiveCustomerAction(
       return { success: false, error: 'No active business profile found for this account.' };
     }
 
-    if (!id || typeof id !== 'string') {
-      return { success: false, error: 'Invalid customer ID provided.' };
-    }
-
     await archiveCustomer(supabase, context.business.id, id);
     revalidatePath('/customers');
 
     return { success: true, data: { id } };
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Failed to archive student.';
-    console.error('archiveCustomerAction error:', message);
-    return { success: false, error: message };
+    console.error('archiveCustomerAction error:', err);
+    return handleActionError(err, 'Failed to archive student.');
   }
 }

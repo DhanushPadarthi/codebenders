@@ -65,31 +65,31 @@ export function PaymentsSummaryCards({ metrics, payments = [] }: PaymentsSummary
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       {/* Total Collected */}
-      <Card className="hover:shadow-md transition-shadow duration-200 border-slate-200/90 relative overflow-hidden">
+      <Card className="hover:shadow-md transition-shadow duration-200 border-slate-200/90 relative overflow-hidden bg-white">
         <div className="absolute top-0 inset-x-0 h-1 bg-emerald-500" />
         <CardContent className="p-5 pt-5">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
               Total Collections
             </span>
-            <div className="p-2 rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-100">
+            <div className="p-2 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-100">
               <TrendingUp className="w-4 h-4 stroke-[2.2]" />
             </div>
           </div>
           <div className="space-y-1">
-            <div className="text-2xl font-bold tracking-tight text-slate-900 font-mono">
+            <div className="text-2xl font-extrabold tracking-tight text-slate-900 font-mono tabular-nums">
               {formatINR(computedMetrics.totalCollected)}
             </div>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-slate-500 font-medium">
               Verified fee receipts in PostgreSQL
             </p>
           </div>
-          <div className="mt-3.5 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] font-medium text-emerald-700">
-            <span className="flex items-center gap-1">
+          <div className="mt-3.5 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] font-semibold text-emerald-700">
+            <span className="flex items-center gap-1 tabular-nums">
               <ArrowUpRight className="w-3.5 h-3.5" />
               <span>UPI: {formatINR(computedMetrics.upiCollected)}</span>
             </span>
-            <span className="text-slate-500 font-normal">
+            <span className="text-slate-500 font-medium tabular-nums">
               Cash: {formatINR(computedMetrics.cashCollected)}
             </span>
           </div>
@@ -97,26 +97,26 @@ export function PaymentsSummaryCards({ metrics, payments = [] }: PaymentsSummary
       </Card>
 
       {/* Today's Collections */}
-      <Card className="hover:shadow-md transition-shadow duration-200 border-slate-200/90 relative overflow-hidden">
+      <Card className="hover:shadow-md transition-shadow duration-200 border-slate-200/90 relative overflow-hidden bg-white">
         <div className="absolute top-0 inset-x-0 h-1 bg-indigo-500" />
         <CardContent className="p-5 pt-5">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
               Today&apos;s Collections
             </span>
-            <div className="p-2 rounded-lg bg-indigo-50 text-indigo-600 border border-indigo-100">
+            <div className="p-2 rounded-xl bg-indigo-50 text-indigo-600 border border-indigo-100">
               <Calendar className="w-4 h-4 stroke-[2.2]" />
             </div>
           </div>
           <div className="space-y-1">
-            <div className="text-2xl font-bold tracking-tight text-slate-900 font-mono">
+            <div className="text-2xl font-extrabold tracking-tight text-slate-900 font-mono tabular-nums">
               {formatINR(computedMetrics.todayCollected)}
             </div>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-slate-500 font-medium">
               Credited today across batches
             </p>
           </div>
-          <div className="mt-3.5 pt-3 border-t border-slate-100 flex items-center gap-1.5 text-[11px] font-medium text-indigo-700">
+          <div className="mt-3.5 pt-3 border-t border-slate-100 flex items-center gap-1.5 text-[11px] font-semibold text-indigo-700">
             <span className="w-1.5 h-1.5 rounded-full bg-indigo-600" />
             <span>Daily cashflow receipt ledger</span>
           </div>
@@ -124,49 +124,49 @@ export function PaymentsSummaryCards({ metrics, payments = [] }: PaymentsSummary
       </Card>
 
       {/* Monthly Collections */}
-      <Card className="hover:shadow-md transition-shadow duration-200 border-slate-200/90 relative overflow-hidden">
+      <Card className="hover:shadow-md transition-shadow duration-200 border-slate-200/90 relative overflow-hidden bg-white">
         <div className="absolute top-0 inset-x-0 h-1 bg-emerald-600" />
         <CardContent className="p-5 pt-5">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
               This Month&apos;s Collections
             </span>
-            <div className="p-2 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-100">
+            <div className="p-2 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-100">
               <CreditCard className="w-4 h-4 stroke-[2.2]" />
             </div>
           </div>
           <div className="space-y-1">
-            <div className="text-2xl font-bold tracking-tight text-slate-900 font-mono">
+            <div className="text-2xl font-extrabold tracking-tight text-slate-900 font-mono tabular-nums">
               {formatINR(computedMetrics.thisMonthCollected)}
             </div>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-slate-500 font-medium">
               Current billing period settlements
             </p>
           </div>
-          <div className="mt-3.5 pt-3 border-t border-slate-100 flex items-center gap-1.5 text-[11px] font-medium text-emerald-700">
+          <div className="mt-3.5 pt-3 border-t border-slate-100 flex items-center gap-1.5 text-[11px] font-semibold text-emerald-700 tabular-nums">
             <ArrowUpRight className="w-3.5 h-3.5" />
-            <span>Bank & Cheques: {formatINR(computedMetrics.bankTransferCollected + computedMetrics.chequeCollected)}</span>
+            <span>Bank &amp; Cheques: {formatINR(computedMetrics.bankTransferCollected + computedMetrics.chequeCollected)}</span>
           </div>
         </CardContent>
       </Card>
 
       {/* Number of Transactions */}
-      <Card className="hover:shadow-md transition-shadow duration-200 border-slate-200/90 relative overflow-hidden">
+      <Card className="hover:shadow-md transition-shadow duration-200 border-slate-200/90 relative overflow-hidden bg-white">
         <div className="absolute top-0 inset-x-0 h-1 bg-slate-700" />
         <CardContent className="p-5 pt-5">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
               Recorded Receipts
             </span>
-            <div className="p-2 rounded-lg bg-slate-100 text-slate-700 border border-slate-200">
+            <div className="p-2 rounded-xl bg-slate-100 text-slate-700 border border-slate-200">
               <Receipt className="w-4 h-4 stroke-[2.2]" />
             </div>
           </div>
           <div className="space-y-1">
-            <div className="text-2xl font-bold tracking-tight text-slate-900 font-mono">
+            <div className="text-2xl font-extrabold tracking-tight text-slate-900 font-mono tabular-nums">
               {computedMetrics.paymentCount}
             </div>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-slate-500 font-medium">
               Official ledger entries generated
             </p>
           </div>

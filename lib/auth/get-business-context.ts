@@ -1,3 +1,4 @@
+import { cache } from 'react';
 import { requireUser } from './require-user';
 
 export interface BusinessEntity {
@@ -35,8 +36,9 @@ export interface BusinessContext {
  * Reusable server-side business-context helper.
  * Strictly relies on verified user session and PostgreSQL RLS.
  * Never trusts client-supplied business IDs.
+ * Memoized per-request with React cache() to prevent redundant database queries.
  */
-export async function getBusinessContext(): Promise<BusinessContext> {
+export const getBusinessContext = cache(async (): Promise<BusinessContext> => {
   const { user, supabase } = await requireUser();
 
   const { data: business, error: bizError } = await supabase
@@ -78,4 +80,4 @@ export async function getBusinessContext(): Promise<BusinessContext> {
     business: business as BusinessEntity | null,
     settings,
   };
-}
+});

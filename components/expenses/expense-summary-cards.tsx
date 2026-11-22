@@ -111,61 +111,61 @@ export function ExpenseSummaryCards({ metrics, bills = [], asOfDate }: ExpenseSu
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       {/* 1. Total Expenses This Month */}
-      <Card className="hover:shadow-md transition-shadow duration-200 border-slate-200/90 relative overflow-hidden">
+      <Card className="hover:shadow-md transition-shadow duration-200 border-slate-200/90 relative overflow-hidden bg-white">
         <div className="absolute top-0 inset-x-0 h-1 bg-slate-900" />
         <CardContent className="p-5 pt-5">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
               Total Expenses This Month
             </span>
-            <div className="p-2 rounded-lg bg-slate-100 text-slate-700 border border-slate-200">
+            <div className="p-2 rounded-xl bg-slate-100 text-slate-700 border border-slate-200">
               <TrendingDown className="w-4 h-4 stroke-[2.2]" />
             </div>
           </div>
           <div className="space-y-1">
-            <div className="text-2xl font-bold tracking-tight text-slate-900 font-mono">
+            <div className="text-2xl font-extrabold tracking-tight text-slate-900 font-mono tabular-nums">
               {formatINR(computedMetrics.totalThisMonth)}
             </div>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-slate-500 font-medium">
               Paid + scheduled for this calendar month
             </p>
           </div>
-          <div className="mt-3.5 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] font-medium text-slate-600">
-            <span>Run-rate: {formatINR(computedMetrics.recurringMonthlyProjection)}/mo</span>
-            <span className="text-emerald-700 font-semibold">{formatINR(computedMetrics.paidThisMonth)} paid</span>
+          <div className="mt-3.5 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] font-semibold text-slate-600">
+            <span className="tabular-nums">Run-rate: {formatINR(computedMetrics.recurringMonthlyProjection)}/mo</span>
+            <span className="text-emerald-700 font-bold tabular-nums">{formatINR(computedMetrics.paidThisMonth)} paid</span>
           </div>
         </CardContent>
       </Card>
 
       {/* 2. Upcoming Expenses */}
-      <Card className="hover:shadow-md transition-shadow duration-200 border-slate-200/90 relative overflow-hidden">
+      <Card className="hover:shadow-md transition-shadow duration-200 border-slate-200/90 relative overflow-hidden bg-white">
         <div className="absolute top-0 inset-x-0 h-1 bg-indigo-500" />
         <CardContent className="p-5 pt-5">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
               Upcoming Bills
             </span>
-            <div className="p-2 rounded-lg bg-indigo-50 text-indigo-600 border border-indigo-100">
+            <div className="p-2 rounded-xl bg-indigo-50 text-indigo-600 border border-indigo-100">
               <Calendar className="w-4 h-4 stroke-[2.2]" />
             </div>
           </div>
           <div className="space-y-1">
-            <div className="text-2xl font-bold tracking-tight text-slate-900 font-mono">
+            <div className="text-2xl font-extrabold tracking-tight text-slate-900 font-mono tabular-nums">
               {formatINR(computedMetrics.upcomingExpenses)}
             </div>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-slate-500 font-medium">
               {computedMetrics.upcomingCount} overhead(s) due soon
             </p>
           </div>
-          <div className="mt-3.5 pt-3 border-t border-slate-100 flex items-center gap-1.5 text-[11px] font-medium text-indigo-700">
+          <div className="mt-3.5 pt-3 border-t border-slate-100 flex items-center gap-1.5 text-[11px] font-semibold text-indigo-700">
             <span className="w-1.5 h-1.5 rounded-full bg-indigo-600" />
-            <span>Scheduled & pending settlement</span>
+            <span>Scheduled &amp; pending settlement</span>
           </div>
         </CardContent>
       </Card>
 
       {/* 3. Overdue Expenses */}
-      <Card className="hover:shadow-md transition-shadow duration-200 border-slate-200/90 relative overflow-hidden">
+      <Card className="hover:shadow-md transition-shadow duration-200 border-slate-200/90 relative overflow-hidden bg-white">
         <div
           className={`absolute top-0 inset-x-0 h-1 ${
             computedMetrics.overdueExpenses > 0 ? "bg-rose-500" : "bg-emerald-500"
@@ -173,11 +173,11 @@ export function ExpenseSummaryCards({ metrics, bills = [], asOfDate }: ExpenseSu
         />
         <CardContent className="p-5 pt-5">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
               Overdue Expenses
             </span>
             <div
-              className={`p-2 rounded-lg border ${
+              className={`p-2 rounded-xl border ${
                 computedMetrics.overdueExpenses > 0
                   ? "bg-rose-50 text-rose-600 border-rose-100"
                   : "bg-emerald-50 text-emerald-600 border-emerald-100"
@@ -188,22 +188,22 @@ export function ExpenseSummaryCards({ metrics, bills = [], asOfDate }: ExpenseSu
           </div>
           <div className="space-y-1">
             <div
-              className={`text-2xl font-bold tracking-tight font-mono ${
+              className={`text-2xl font-extrabold tracking-tight font-mono tabular-nums ${
                 computedMetrics.overdueExpenses > 0 ? "text-rose-600" : "text-emerald-700"
               }`}
             >
               {formatINR(computedMetrics.overdueExpenses)}
             </div>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-slate-500 font-medium">
               {computedMetrics.overdueCount > 0
                 ? `${computedMetrics.overdueCount} bill(s) past payment deadline`
                 : "All operating bills current"}
             </p>
           </div>
-          <div className="mt-3.5 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] font-medium">
+          <div className="mt-3.5 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] font-semibold">
             <span
               className={
-                computedMetrics.overdueExpenses > 0 ? "text-rose-600 font-semibold" : "text-emerald-700"
+                computedMetrics.overdueExpenses > 0 ? "text-rose-600 font-bold" : "text-emerald-700 font-bold"
               }
             >
               {computedMetrics.overdueExpenses > 0 ? "Settle to avoid service cutoff" : "No overdue liabilities"}
@@ -213,28 +213,28 @@ export function ExpenseSummaryCards({ metrics, bills = [], asOfDate }: ExpenseSu
       </Card>
 
       {/* 4. Total Paid All Time */}
-      <Card className="hover:shadow-md transition-shadow duration-200 border-slate-200/90 relative overflow-hidden">
+      <Card className="hover:shadow-md transition-shadow duration-200 border-slate-200/90 relative overflow-hidden bg-white">
         <div className="absolute top-0 inset-x-0 h-1 bg-emerald-500" />
         <CardContent className="p-5 pt-5">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
               Total Settled (All-Time)
             </span>
-            <div className="p-2 rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-100">
+            <div className="p-2 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-100">
               <CheckCircle2 className="w-4 h-4 stroke-[2.2]" />
             </div>
           </div>
           <div className="space-y-1">
-            <div className="text-2xl font-bold tracking-tight text-slate-900 font-mono">
+            <div className="text-2xl font-extrabold tracking-tight text-slate-900 font-mono tabular-nums">
               {formatINR(computedMetrics.totalPaidAllTime)}
             </div>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-slate-500 font-medium">
               {computedMetrics.paidCount} total operational payment(s)
             </p>
           </div>
-          <div className="mt-3.5 pt-3 border-t border-slate-100 flex items-center gap-1.5 text-[11px] font-medium text-emerald-700">
+          <div className="mt-3.5 pt-3 border-t border-slate-100 flex items-center gap-1.5 text-[11px] font-semibold text-emerald-700">
             <RefreshCw className="w-3 h-3 text-emerald-600" />
-            <span>Audited & reconciled records</span>
+            <span>Audited &amp; reconciled records</span>
           </div>
         </CardContent>
       </Card>

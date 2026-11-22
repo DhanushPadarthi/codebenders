@@ -4,11 +4,15 @@ import { getBusinessContext } from "@/lib/auth/get-business-context";
 import { getInvoices } from "@/lib/dal/invoices";
 import { InvoicesClientView } from "@/components/invoices/invoices-client-view";
 
-export const instant = false;
-
-export default async function InvoicesPage() {
+export default async function InvoicesPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ search?: string }>;
+}) {
   const { supabase } = await requireUser();
   const context = await getBusinessContext();
+  const params = await searchParams;
+  const initialSearch = params?.search || "";
 
   if (!context.business) {
     return (
@@ -29,6 +33,7 @@ export default async function InvoicesPage() {
     <InvoicesClientView
       initialInvoices={initialInvoices}
       businessName={context.business.name}
+      initialSearch={initialSearch}
     />
   );
 }

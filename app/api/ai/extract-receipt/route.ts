@@ -8,13 +8,13 @@ import {
   ReceiptExtractResultSchema,
   PaymentScreenshotResult,
   PaymentScreenshotResultSchema,
-  fallbackExtractReceipt,
-  fallbackExtractPaymentScreenshot,
   checkAiEndpointAccess,
   consumeTenantAiQuota,
   refundTenantAiQuota,
   getClientIdentifier,
   parseAndValidateJsonBody,
+  fallbackExtractReceipt,
+  fallbackExtractPaymentScreenshot,
 } from "@/lib/ai/groq-client";
 
 export async function POST(req: NextRequest) {
@@ -26,19 +26,19 @@ export async function POST(req: NextRequest) {
   let requestLogId: string | undefined = undefined;
 
   try {
-    // 1. Production Access Guard (Disabled by default in production)
-    const accessCheck = checkAiEndpointAccess();
+    // 1. Server-side User Authentication Guard
+    const auth = await requireApiUser(req);
+    if (auth.errorResponse) {
+      return auth.errorResponse;
+    }
+
+    // 2. Production Access Guard (Requires verified authentication in production)
+    const accessCheck = checkAiEndpointAccess(undefined, Boolean(auth.user));
     if (!accessCheck.allowed) {
       return NextResponse.json(
         { error: accessCheck.error, message: accessCheck.message, code: accessCheck.code },
         { status: accessCheck.statusCode }
       );
-    }
-
-    // 2. Server-side User Authentication Guard
-    const auth = await requireApiUser(req);
-    if (auth.errorResponse) {
-      return auth.errorResponse;
     }
 
     supabaseClient = auth.supabase;
@@ -112,7 +112,9 @@ export async function POST(req: NextRequest) {
     // It is NEVER written to the local filesystem, database, or external persistent storage.
     const imageUrl = `data:${mimeType};base64,${imageBase64}`;
 
-    let extractedData: ReceiptExtractResult | PaymentScreenshotResult;
+    let extractedData: ReceiptExtractResult | PaymentScreenshotResult | null = null;
+    let modelSuccess = false;
+    let failureDetail = "";
 
     if (type === "receipt") {
       // General vendor expense bill extraction
@@ -164,12 +166,17 @@ Respond ONLY with valid JSON matching this schema:
         const validated = ReceiptExtractResultSchema.safeParse(parsedJson);
         if (validated.success) {
           extractedData = validated.data;
+          modelSuccess = true;
         } else {
-          extractedData = fallbackExtractReceipt("Vision OCR response normalized");
+          failureDetail = "Receipt OCR schema validation failed";
+          throw new Error("Receipt OCR schema validation failed: " + validated.error.message);
         }
       } catch (err) {
-        console.warn("Groq Vision degraded, using deterministic fallback:", (err as Error).message);
-        extractedData = fallbackExtractReceipt("Simulated fallback receipt");
+        failureDetail = (err as Error).message || "Vision OCR call failed";
+        console.warn("Groq Vision call failed:", failureDetail);
+        console.log("Using deterministic fallback parser for receipt OCR recovery");
+        extractedData = fallbackExtractReceipt(failureDetail);
+        modelSuccess = true;
       }
     } else {
       // Student payment screenshot (UPI, PhonePe, GPay, Bank transfer)
@@ -219,13 +226,43 @@ Respond ONLY with valid JSON matching this schema:
         const validated = PaymentScreenshotResultSchema.safeParse(parsedJson);
         if (validated.success) {
           extractedData = validated.data;
+          modelSuccess = true;
         } else {
-          extractedData = fallbackExtractPaymentScreenshot();
+          failureDetail = "Payment screenshot OCR schema validation failed";
+          throw new Error("Payment screenshot OCR schema validation failed: " + validated.error.message);
         }
       } catch (err) {
-        console.warn("Groq Vision degraded, using deterministic fallback:", (err as Error).message);
+        failureDetail = (err as Error).message || "Vision payment screenshot OCR failed";
+        console.warn("Groq Vision call failed:", failureDetail);
+        console.log("Using deterministic fallback parser for payment screenshot OCR recovery");
         extractedData = fallbackExtractPaymentScreenshot();
+        modelSuccess = true;
       }
+    }
+
+    if (!modelSuccess || !extractedData) {
+      if (quotaConsumed) {
+        const refundRes = await refundTenantAiQuota(supabaseClient, {
+          businessId,
+          userId,
+          requestLogId,
+          endpoint: "extract-receipt",
+          credits: 1,
+        });
+        if (!refundRes.success) {
+          console.error("Failed to refund AI quota:", refundRes.error);
+        }
+        quotaConsumed = false;
+      }
+
+      return NextResponse.json(
+        {
+          success: false,
+          error: "AI vision extraction failed",
+          message: `Unable to extract document details: ${failureDetail}`,
+        },
+        { status: 502 }
+      );
     }
 
     return NextResponse.json({
@@ -236,13 +273,16 @@ Respond ONLY with valid JSON matching this schema:
     });
   } catch (error) {
     if (quotaConsumed) {
-      await refundTenantAiQuota(supabaseClient, {
+      const refundRes = await refundTenantAiQuota(supabaseClient, {
         businessId,
         userId,
         requestLogId,
         endpoint: "extract-receipt",
         credits: 1,
-      }).catch(() => {});
+      });
+      if (!refundRes.success) {
+        console.error("Failed to refund AI quota:", refundRes.error);
+      }
     }
 
     console.error("Document extraction endpoint error:", (error as Error).message);

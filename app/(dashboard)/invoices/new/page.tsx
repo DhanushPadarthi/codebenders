@@ -5,8 +5,6 @@ import { getCustomers } from "@/lib/dal/customers";
 import { generateNextInvoiceNumber } from "@/lib/dal/invoices";
 import { NewInvoiceClientView } from "@/components/invoices/new-invoice-client-view";
 
-export const instant = false;
-
 interface NewInvoicePageProps {
   searchParams?: Promise<{ customerId?: string }>;
 }

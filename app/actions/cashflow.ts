@@ -1,7 +1,8 @@
 'use server';
 
+import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
-import { requireUser } from '@/lib/auth/require-user';
+import { requireUser, handleActionError } from '@/lib/auth/require-user';
 import { getBusinessContext } from '@/lib/auth/get-business-context';
 import {
   getAggregatedCashflowState,
@@ -38,9 +39,8 @@ export async function getCashflowForecastAction(options?: {
     const state = await getAggregatedCashflowState(supabase, context.business.id, options);
     return { success: true, data: state };
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Failed to calculate cashflow forecast.';
-    console.error('getCashflowForecastAction error:', message);
-    return { success: false, error: message };
+    console.error('getCashflowForecastAction error:', err);
+    return handleActionError(err, 'Failed to calculate cashflow forecast.');
   }
 }
 
@@ -59,9 +59,8 @@ export async function getSavedScenariosAction(): Promise<ActionResult<CashflowSc
     const scenarios = await getCashflowScenarios(supabase, context.business.id);
     return { success: true, data: scenarios };
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Failed to retrieve scenarios.';
-    console.error('getSavedScenariosAction error:', message);
-    return { success: false, error: message };
+    console.error('getSavedScenariosAction error:', err);
+    return handleActionError(err, 'Failed to retrieve scenarios.');
   }
 }
 
@@ -81,7 +80,17 @@ export async function saveScenarioAction(
 
     const validation = SaveScenarioSchema.safeParse(input);
     if (!validation.success) {
-      return { success: false, error: 'Invalid scenario parameters.' };
+      const fieldErrors: Record<string, string[]> = {};
+      for (const issue of validation.error.issues) {
+        const field = issue.path.join('.');
+        fieldErrors[field] = fieldErrors[field] || [];
+        fieldErrors[field].push(issue.message);
+      }
+      return {
+        success: false,
+        error: 'Invalid scenario parameters.',
+        details: fieldErrors,
+      };
     }
 
     const scenario = await saveCashflowScenario(supabase, context.business.id, validation.data);
@@ -90,9 +99,8 @@ export async function saveScenarioAction(
 
     return { success: true, data: scenario };
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Failed to save scenario.';
-    console.error('saveScenarioAction error:', message);
-    return { success: false, error: message };
+    console.error('saveScenarioAction error:', err);
+    return handleActionError(err, 'Failed to save scenario.');
   }
 }
 
@@ -101,6 +109,10 @@ export async function saveScenarioAction(
  */
 export async function deleteScenarioAction(scenarioId: string): Promise<ActionResult<boolean>> {
   try {
+    if (!z.string().uuid().safeParse(scenarioId).success) {
+      return { success: false, error: 'Invalid scenario ID format.' };
+    }
+
     const { supabase } = await requireUser();
     const context = await getBusinessContext();
 
@@ -114,9 +126,8 @@ export async function deleteScenarioAction(scenarioId: string): Promise<ActionRe
 
     return { success: true, data: success };
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Failed to archive scenario.';
-    console.error('deleteScenarioAction error:', message);
-    return { success: false, error: message };
+    console.error('deleteScenarioAction error:', err);
+    return handleActionError(err, 'Failed to archive scenario.');
   }
 }
 
@@ -153,8 +164,7 @@ export async function simulateScenarioAction(
 
     return { success: true, data: result };
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Failed to run scenario simulation.';
-    console.error('simulateScenarioAction error:', message);
-    return { success: false, error: message };
+    console.error('simulateScenarioAction error:', err);
+    return handleActionError(err, 'Failed to run scenario simulation.');
   }
 }

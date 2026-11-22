@@ -6,11 +6,15 @@ import { getInvoices } from "@/lib/dal/invoices";
 import { getCustomers } from "@/lib/dal/customers";
 import { PaymentsClientView } from "@/components/payments/payments-client-view";
 
-export const instant = false;
-
-export default async function PaymentsPage() {
+export default async function PaymentsPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ search?: string }>;
+}) {
   const { supabase } = await requireUser();
   const context = await getBusinessContext();
+  const params = await searchParams;
+  const initialSearch = params?.search || "";
 
   if (!context.business) {
     return (
@@ -39,6 +43,7 @@ export default async function PaymentsPage() {
       invoices={invoices}
       customers={customers}
       businessName={context.business.name}
+      initialSearch={initialSearch}
     />
   );
 }

@@ -238,32 +238,35 @@ export function SmartActionCenter(props: SmartActionCenterProps) {
   );
 
   return (
-    <Card className="border-slate-200 shadow-sm overflow-hidden bg-white">
-      <CardHeader className="bg-gradient-to-r from-slate-900 to-indigo-950 text-white p-5 pb-4">
+    <Card className="border-slate-200/90 shadow-sm overflow-hidden bg-white">
+      <CardHeader className="bg-gradient-to-r from-slate-900 via-slate-900 to-indigo-950 text-white p-5 pb-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <div className="p-1.5 rounded-lg bg-emerald-400/20 text-emerald-300 border border-emerald-400/30">
+          <div className="flex items-center gap-2.5">
+            <div className="p-2 rounded-xl bg-emerald-400/20 text-emerald-300 border border-emerald-400/30">
               <Zap className="w-4 h-4 stroke-[2.5]" />
             </div>
             <div>
-              <CardTitle className="text-base font-bold text-white">
+              <CardTitle className="text-base font-bold text-white flex items-center gap-2">
                 Smart Action Centre
+                <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-indigo-500/30 text-indigo-200 border border-indigo-400/30">
+                  Priority Queue
+                </span>
               </CardTitle>
               <CardDescription className="text-slate-300 text-xs">
-                Real-time collection tasks &amp; critical cashflow decisions for today.
+                Time-sensitive collection tasks &amp; critical cashflow actions for today.
               </CardDescription>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2.5">
             <Link
               href="/recovery-queue"
-              className="text-xs font-semibold text-emerald-300 hover:text-emerald-200 underline underline-offset-4"
+              className="text-xs font-semibold text-emerald-300 hover:text-emerald-200 underline underline-offset-4 transition-colors"
             >
               Open Recovery Queue →
             </Link>
-            <Badge className="bg-emerald-500/20 text-emerald-300 border-emerald-500/30 text-xs">
-              {visibleActions.length} Pending
+            <Badge className="bg-emerald-500/20 text-emerald-300 border-emerald-500/30 text-xs font-semibold">
+              {visibleActions.length} Actions
             </Badge>
           </div>
         </div>
@@ -271,18 +274,20 @@ export function SmartActionCenter(props: SmartActionCenterProps) {
 
       <CardContent className="p-5 space-y-3">
         {activeMessage && (
-          <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-center gap-2 animate-in fade-in duration-200">
+          <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold flex items-center gap-2 animate-in fade-in duration-200">
             <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0" />
             <span>{activeMessage}</span>
           </div>
         )}
 
         {visibleActions.length === 0 ? (
-          <div className="text-center py-8 text-slate-500">
-            <CheckCircle className="w-8 h-8 text-emerald-500 mx-auto mb-2" />
-            <p className="text-sm font-semibold text-slate-800">All caught up!</p>
+          <div className="text-center py-8 text-slate-500 space-y-2">
+            <div className="w-10 h-10 rounded-full bg-emerald-50 text-emerald-600 mx-auto flex items-center justify-center">
+              <CheckCircle className="w-5 h-5" />
+            </div>
+            <p className="text-sm font-bold text-slate-900">All caught up!</p>
             <p className="text-xs text-slate-500">
-              No pending cashflow alerts or overdue follow-ups.
+              No pending cashflow alerts or overdue follow-ups requiring immediate action.
             </p>
           </div>
         ) : (
@@ -299,7 +304,7 @@ export function SmartActionCenter(props: SmartActionCenterProps) {
                   "p-4 rounded-xl border transition-all hover:shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4",
                   isUrgent && "bg-rose-50/40 border-rose-200/80",
                   isPromise && "bg-amber-50/40 border-amber-200/80",
-                  isBill && "bg-slate-50 border-slate-200",
+                  isBill && "bg-slate-50/80 border-slate-200/80",
                   isBatch && "bg-indigo-50/40 border-indigo-200/80"
                 )}
               >
@@ -326,12 +331,12 @@ export function SmartActionCenter(props: SmartActionCenterProps) {
                       </Badge>
                     )}
 
-                    <h4 className="font-semibold text-sm text-slate-900 truncate">
+                    <h4 className="font-bold text-sm text-slate-900 truncate">
                       {action.title}
                     </h4>
 
                     {action.amount && (
-                      <span className="font-mono font-bold text-xs text-slate-800 bg-white px-2 py-0.5 rounded border border-slate-200">
+                      <span className="font-mono font-bold text-xs text-slate-800 bg-white px-2 py-0.5 rounded-lg border border-slate-200 tabular-nums">
                         {formatINR(action.amount)}
                       </span>
                     )}
@@ -342,7 +347,7 @@ export function SmartActionCenter(props: SmartActionCenterProps) {
                   </p>
 
                   {action.parentPhone && (
-                    <div className="flex items-center gap-2 text-[11px] text-slate-500">
+                    <div className="flex items-center gap-2 text-[11px] text-slate-500 font-medium">
                       <PhoneCall className="w-3 h-3 text-slate-400" />
                       <span>Parent: {action.parentPhone}</span>
                     </div>
@@ -355,7 +360,7 @@ export function SmartActionCenter(props: SmartActionCenterProps) {
                     <Button
                       variant="outline"
                       size="sm"
-                      className="text-xs bg-white text-slate-700"
+                      className="text-xs bg-white text-slate-700 hover:bg-slate-50"
                       onClick={() => {
                         const target =
                           action.type === "upcoming_bill" ? "/expenses" : "/invoices";
@@ -369,7 +374,7 @@ export function SmartActionCenter(props: SmartActionCenterProps) {
                   <Button
                     variant={isUrgent ? "danger" : "default"}
                     size="sm"
-                    className="text-xs gap-1.5"
+                    className="text-xs gap-1.5 font-semibold"
                     onClick={() => {
                       if (
                         action.type === "overdue_followup" ||

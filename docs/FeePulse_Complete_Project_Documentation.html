@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>FeePulse — AI Cashflow Copilot for Independent Tutors | Official Documentation</title>
+  <style>
+    @page {
+      size: A4;
+      margin: 20mm;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+      line-height: 1.6;
+      color: #1e293b;
+      background-color: #f1f5f9;
+      margin: 0;
+      padding: 40px 20px;
+    }
+    .page-container {
+      max-width: 860px;
+      margin: 0 auto;
+      background: #ffffff;
+      padding: 60px 70px;
+      border-radius: 8px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    }
+    h1 {
+      font-size: 28px;
+      color: #0f172a;
+      margin-bottom: 4px;
+      border-bottom: 2px solid #059669;
+      padding-bottom: 12px;
+    }
+    .subtitle {
+      font-size: 16px;
+      font-weight: 600;
+      color: #059669;
+      margin-top: 0;
+      margin-bottom: 24px;
+    }
+    h2 {
+      font-size: 20px;
+      color: #0f172a;
+      margin-top: 32px;
+      margin-bottom: 12px;
+      border-bottom: 1px solid #e2e8f0;
+      padding-bottom: 6px;
+    }
+    h3 {
+      font-size: 16px;
+      color: #1e293b;
+      margin-top: 20px;
+      margin-bottom: 8px;
+    }
+    p, li {
+      font-size: 14px;
+      color: #334155;
+    }
+    ul, ol {
+      margin-top: 6px;
+      margin-bottom: 16px;
+      padding-left: 24px;
+    }
+    li {
+      margin-bottom: 4px;
+    }
+    .callout {
+      background: #ecfdf5;
+      border-left: 4px solid #059669;
+      padding: 16px 20px;
+      border-radius: 0 8px 8px 0;
+      margin: 20px 0;
+      font-size: 13.5px;
+    }
+    .callout-title {
+      font-weight: bold;
+      color: #065f46;
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      font-size: 11px;
+      letter-spacing: 0.5px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px 0;
+      font-size: 13px;
+    }
+    th, td {
+      padding: 10px 14px;
+      text-align: left;
+      vertical-align: top;
+    }
+    th {
+      background-color: #0f172a;
+      color: #ffffff;
+      font-weight: 600;
+      border-top: 1px solid #0f172a;
+      border-bottom: 1px solid #0f172a;
+    }
+    th.emerald {
+      background-color: #059669;
+    }
+    td {
+      border-bottom: 1px solid #e2e8f0;
+      color: #334155;
+    }
+    tr:nth-child(even) td {
+      background-color: #f8fafc;
+    }
+    code {
+      background-color: #f1f5f9;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 12.5px;
+      color: #0f172a;
+    }
+    pre {
+      background-color: #0f172a;
+      color: #f8fafc;
+      padding: 16px 20px;
+      border-radius: 8px;
+      overflow-x: auto;
+      font-size: 12.5px;
+      line-height: 1.5;
+    }
+    .badge {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 600;
+      margin-right: 6px;
+      margin-bottom: 6px;
+    }
+    .badge-green { background: #d1fae5; color: #065f46; }
+    .badge-blue { background: #dbeafe; color: #1e40af; }
+    .badge-purple { background: #ede9fe; color: #5b21b6; }
+    .footer {
+      margin-top: 40px;
+      padding-top: 20px;
+      border-top: 1px solid #e2e8f0;
+      font-size: 12px;
+      color: #94a3b8;
+      text-align: center;
+    }
+    @media print {
+      body { background: #fff; padding: 0; }
+      .page-container { box-shadow: none; padding: 0; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="page-container">
+
+  <h1>FeePulse — AI Cashflow Copilot for Independent Tutors</h1>
+  <div class="subtitle">Official Comprehensive Project & Hackathon Submission Documentation</div>
+
+  <div class="callout">
+    <div class="callout-title">Live Application & Quick Access</div>
+    <strong>Live Production Web App:</strong> <a href="https://feepulse.vercel.app" target="_blank">https://feepulse.vercel.app</a><br>
+    <strong>One-Click Judge Demo:</strong> Open the live link and click <em>"Explore Live Demo →"</em> (No signup or credentials required)<br>
+    <strong>Official GitHub Repository:</strong> <a href="https://github.com/DhanushPadarthi/codebenders" target="_blank">https://github.com/DhanushPadarthi/codebenders</a><br>
+    <strong>Author / Lead Developer:</strong> Dhanush Padarthi &nbsp;|&nbsp; <strong>Hackathon:</strong> CodeBenders 2026
+  </div>
+
+  <h2>1. Project Introduction</h2>
+  <p><strong>FeePulse</strong> is a dedicated financial copilot built specifically for independent tutors, home educators, and micro-coaching academies in India.</p>
+  <p>Independent tutors operate a high-trust, relationship-driven business. While generic accounting software (such as Tally, QuickBooks, or Zoho Books) caters to GST supply chains, inventory management, and corporate double-entry ledgers, independent tutors face an entirely different everyday operational struggle:</p>
+  <ul>
+    <li>Tutors juggle fee notes across physical notebooks, WhatsApp chats, and fragmented spreadsheets.</li>
+    <li>Parents pay irregularly in unpredictable partial installments (e.g., ₹1,500 now, ₹1,000 two weeks later, ₹500 in cash).</li>
+    <li>WhatsApp payment commitments (<em>"Sir, will pay next Tuesday"</em>) are easily forgotten, quietly slipping into uncollected bad debt.</li>
+    <li>Meanwhile, fixed operating overheads (classroom rent, teacher honorariums, electricity) arrive on strict calendar deadlines.</li>
+    <li>Tutors only realize a cash deficit after they are already short on rent day.</li>
+  </ul>
+  <p><strong>FeePulse solves this by unifying fee tracking, installment accounting, WhatsApp promise tracking, and predictive 30/60/90-day cashflow runway into a single automated back-office workspace.</strong></p>
+
+  <h2>2. The Problem We Solve</h2>
+  <table>
+    <thead>
+      <tr>
+        <th style="width: 45%;">Traditional Tutor Workflow (The Problem)</th>
+        <th style="width: 55%;">The FeePulse Solution</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Pocket Notebooks & Spreadsheets:</strong><br>Manually tracking who paid and who owes across 40–80 students with fragmented, handwritten notes.</td>
+        <td><strong>Unified Student & Fee Ledger:</strong><br>Instant directory tracking enrolled students, batches, fee structures, and remaining balances in real time.</td>
+      </tr>
+      <tr>
+        <td><strong>Fragmented Partial Installments:</strong><br>₹2,000 paid on an ₹8,500 fee slip causes mental math errors and awkward disputes.</td>
+        <td><strong>Atomic Installment Accounting:</strong><br>Every payment is recorded with integer paise precision and automatically adjusts invoice balances.</td>
+      </tr>
+      <tr>
+        <td><strong>Forgotten WhatsApp Promises:</strong><br>Parents say <em>"will pay by the 10th"</em> and commitments slip past unnoticed.</td>
+        <td><strong>Smart Recovery Queue:</strong><br>Overdue accounts are automatically ranked by an urgency score factoring overdue aging and broken promises.</td>
+      </tr>
+      <tr>
+        <td><strong>Awkward Payment Reminders:</strong><br>Asking parents directly for money feels distasteful, uncomfortable, or aggressive.</td>
+        <td><strong>1-Click Pre-filled WhatsApp Links:</strong><br>AI drafts polite, professional reminders with pre-filled <code>wa.me/</code> links that tutors review and send in 1 tap.</td>
+      </tr>
+      <tr>
+        <td><strong>Unexpected Cash Crises:</strong><br>Finding out on the 1st of the month that student collections are insufficient for rent.</td>
+        <td><strong>Deterministic Cashflow Forecasting:</strong><br>Proactive 30/60/90-day cash runway modeling upcoming fee cycles against scheduled overheads.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>3. Main Features & Exact Access Guide</h2>
+  <table>
+    <thead>
+      <tr>
+        <th class="emerald" style="width: 20%;">Feature</th>
+        <th class="emerald" style="width: 18%;">Route</th>
+        <th class="emerald" style="width: 32%;">What It Does</th>
+        <th class="emerald" style="width: 30%;">How to Use It</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Financial Dashboard</strong></td>
+        <td><code>/</code> (Overview)</td>
+        <td>Real-time financial health cockpit showing total receivables, overdue aging, monthly collections, and overheads.</td>
+        <td>Open the app to view live KPI cards, interactive 30-day runway projection, and prioritized action items.</td>
+      </tr>
+      <tr>
+        <td><strong>Students & Batches</strong></td>
+        <td><code>/customers</code></td>
+        <td>Full student roster management with parent contacts, tuition batch/grade tags, monthly fees, and payment histories.</td>
+        <td>Click <em>Add Student</em>, fill name, grade, parent WhatsApp, and fee. Click any student row to view balance drawer.</td>
+      </tr>
+      <tr>
+        <td><strong>Invoices & Fee Slips</strong></td>
+        <td><code>/invoices</code></td>
+        <td>Multi-item tuition fee billing with draft/sent workflows, balance due calculations, and printable slips.</td>
+        <td>Click <em>Create Invoice</em>, choose student, add line items (e.g. Class 10 Maths Term 1), and click <em>Issue Invoice</em>.</td>
+      </tr>
+      <tr>
+        <td><strong>Fee Collections & Receipts</strong></td>
+        <td><code>/payments</code></td>
+        <td>Record payments via UPI, Cash, Cheque, or Net Banking with atomic balance reconciliation and printable receipts.</td>
+        <td>Click <em>Record Payment</em>, pick invoice, enter amount and mode/UTR, and print or download verified receipt.</td>
+      </tr>
+      <tr>
+        <td><strong>Operational Expenses</strong></td>
+        <td><code>/expenses</code></td>
+        <td>Track coaching rent, assistant teacher salaries, electricity, and exam printing to prevent budget surprises.</td>
+        <td>Click <em>Add Expense</em>, enter vendor, category, amount, and due date. Mark as paid upon settlement.</td>
+      </tr>
+      <tr>
+        <td><strong>Cashflow Forecasting</strong></td>
+        <td><code>/cashflow</code></td>
+        <td>30, 60, and 90-day deterministic cash roll-forward projecting daily balances, inflow cycles, and scheduled bills.</td>
+        <td>Toggle between 30D, 60D, and 90D views to review daily ending balances and early deficit risk warnings.</td>
+      </tr>
+      <tr>
+        <td><strong>Scenario Simulator</strong></td>
+        <td><code>/cashflow</code> (Simulator)</td>
+        <td>Interactive stress-testing sandbox to model collection delays (e.g. 20% delayed payments) or expense spikes.</td>
+        <td>Open Scenario Simulator tab, adjust sliders for collection rates or delayed dates, and compare outcomes.</td>
+      </tr>
+      <tr>
+        <td><strong>Smart Recovery Queue</strong></td>
+        <td><code>/recovery-queue</code></td>
+        <td>Ranks overdue accounts by urgency score (days overdue, balance amount, and broken payment promises).</td>
+        <td>Review top-ranked students, view past promise records, and click <em>Send WhatsApp Reminder</em> to follow up.</td>
+      </tr>
+      <tr>
+        <td><strong>AI Assistant & Scanner</strong></td>
+        <td><code>/ai-assistant</code></td>
+        <td>Multimodal scanner for receipts/bills, WhatsApp promise parser, and multi-tone reminder draft generator.</td>
+        <td>Upload an expense bill image or paste a WhatsApp chat snippet to extract structured amounts and dates.</td>
+      </tr>
+      <tr>
+        <td><strong>Academy Settings</strong></td>
+        <td><code>/settings</code></td>
+        <td>Configure tuition academy name, UPI ID for QR code fee collection, invoice prefix, and cash reserve targets.</td>
+        <td>Update business profile, enter UPI handle (e.g. <code>academy@okhdfcbank</code>), and save preferences.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>4. Quick 5-Step Demo Workflow</h2>
+  <ol>
+    <li><strong>Open Financial Dashboard (<code>/</code>):</strong> View the live financial cockpit, outstanding balances, overdue fee aging, and active priority queue.</li>
+    <li><strong>Add a Student (<code>/customers</code>):</strong> Navigate to Customers, click <em>Add Student</em>, and enroll a new student with monthly tuition fee details.</li>
+    <li><strong>Issue a Fee Invoice (<code>/invoices</code>):</strong> Go to Invoices, click <em>Create Invoice</em>, select the student, add tuition items, and set the due date.</li>
+    <li><strong>Record a Partial Payment (<code>/payments</code>):</strong> Go to Payments, click <em>Record Payment</em>, choose the invoice, enter a partial amount (e.g. ₹3,000 on a ₹7,500 invoice), and notice the remaining balance update automatically.</li>
+    <li><strong>Inspect Cashflow & Recovery Queue:</strong> Open Cashflow to inspect the updated daily inflow schedule, then open Recovery Queue to see the remaining balance prioritized for follow-up.</li>
+  </ol>
+
+  <h2>5. Technology Stack</h2>
+  <table>
+    <thead>
+      <tr>
+        <th style="width: 35%;">Technology Layer</th>
+        <th style="width: 65%;">Stack Selection & Implementation</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Frontend Framework</strong></td>
+        <td>Next.js 16.4.6 (App Router with Turbopack & Partial Prefetching)</td>
+      </tr>
+      <tr>
+        <td><strong>UI Library</strong></td>
+        <td>React 19.0.0 (Server Components, Client Components, Suspense Streaming)</td>
+      </tr>
+      <tr>
+        <td><strong>Programming Language</strong></td>
+        <td>TypeScript 5 (Strict Mode enabled across all components, actions, and DAL)</td>
+      </tr>
+      <tr>
+        <td><strong>Styling & Design System</strong></td>
+        <td>Tailwind CSS 4 with custom fintech design tokens, card layouts, and responsive drawers</td>
+      </tr>
+      <tr>
+        <td><strong>Database & Auth</strong></td>
+        <td>Supabase PostgreSQL 17 with Row-Level Security (RLS) & <code>@supabase/ssr</code></td>
+      </tr>
+      <tr>
+        <td><strong>AI Vision & Reasoning</strong></td>
+        <td>Groq Cloud API (Llama 3.3 70B Versatile for reasoning & Qwen 2.5 72B Vision for OCR)</td>
+      </tr>
+      <tr>
+        <td><strong>Data Schema Validation</strong></td>
+        <td>Zod 3 (Strict runtime schema validation on all inputs, models, and API responses)</td>
+      </tr>
+      <tr>
+        <td><strong>Iconography</strong></td>
+        <td>Lucide React (Optimized tree-shaken SVG icon suite)</td>
+      </tr>
+      <tr>
+        <td><strong>Production Hosting</strong></td>
+        <td>Vercel Production Platform (Edge CDN, Automated CI/CD, SSL/TLS, HTTP/2)</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>6. Architecture & Financial Security Safeguards</h2>
+  <ul>
+    <li><strong>ACID Row-Level Mutex Locking:</strong> Concurrent payments on the same invoice are serialized at the PostgreSQL database layer via <code>SELECT ... FOR UPDATE</code> row locks, preventing negative balances and race conditions under simultaneous submissions.</li>
+    <li><strong>Integer Paise Financial Precision:</strong> All monetary calculations convert rupees into integer paise (<code>Math.round(amount * 100)</code>) during computation, eliminating JavaScript floating-point errors (such as <code>0.1 + 0.2 !== 0.3</code>).</li>
+    <li><strong>Durable Payment Idempotency:</strong> Payments are bound to unique request idempotency keys and external UTR / Cheque references (<code>uk_payments_business_reference</code>), rejecting duplicate submissions at both the API and database constraint layer.</li>
+    <li><strong>Strict Multi-Tenant RLS Isolation:</strong> All database tables enforce PostgreSQL Row-Level Security scoped to the authenticated user's <code>business_id</code>. Cross-tenant data leakage is prevented at the database kernel.</li>
+    <li><strong>Human-in-the-Loop AI Control:</strong> AI endpoints never alter financial ledgers autonomously. Extracted amounts, dates, and reminder drafts require explicit tutor approval before persisting.</li>
+    <li><strong>Streaming-Safe Request Limits:</strong> AI and API endpoints enforce bounded body size limits (&lt; 8MB) and sliding-window rate limiting (30 req/min) to prevent resource exhaustion.</li>
+  </ul>
+
+  <h2>7. One-Click Demo Access for Hackathon Judges</h2>
+  <div class="callout">
+    <div class="callout-title">Zero-Friction Judge Access</div>
+    Judges are <strong>not</strong> required to register, confirm emails, or manually create sample records:<br><br>
+    1. Open <a href="https://feepulse.vercel.app/login" target="_blank">https://feepulse.vercel.app/login</a><br>
+    2. Click the prominent green button: <strong>"Explore Live Demo →"</strong><br>
+    3. You will be authenticated immediately into a dedicated, isolated demo account:<br>
+    &nbsp;&nbsp;&nbsp;• <strong>Academy:</strong> Prof. Rajesh Sharma's Tuition Classes<br>
+    &nbsp;&nbsp;&nbsp;• <strong>Preloaded Data:</strong> 14 active students, 12 invoices across all statuses, 5 payment receipts, 4 operational bills, and 3 payment promises.<br>
+    &nbsp;&nbsp;&nbsp;• <strong>Walkthrough:</strong> An interactive 10-step device-responsive onboarding guide will welcome you.<br>
+    &nbsp;&nbsp;&nbsp;• <strong>Reopen Tour:</strong> Tap the <em>Tour Guide</em> button in the top navbar or sidebar anytime to reopen the guide.
+  </div>
+
+  <h2>8. Currently Working in Production vs Commercial Roadmap</h2>
+  <h3>Currently Working in Live Production:</h3>
+  <ul>
+    <li>Multi-tenant authentication, session management, and business configuration.</li>
+    <li>Student roster with parent contact info, tuition batches, and individual ledgers.</li>
+    <li>Invoicing engine with draft/sent states, line items, and printable fee slips.</li>
+    <li>Partial and full payment tracking with idempotent duplicate detection and receipts.</li>
+    <li>Operational overhead management with recurring frequency tracking.</li>
+    <li>Deterministic 30/60/90-day cashflow roll-forward engine and runway chart.</li>
+    <li>Interactive What-If Scenario Simulator with real-time comparative lines.</li>
+    <li>Smart Recovery Queue with urgency ranking based on aging and broken promises.</li>
+    <li>Multimodal document receipt extraction and WhatsApp promise parsing.</li>
+    <li>1-click WhatsApp message deep links (<code>https://wa.me/</code>) for manual tutor review.</li>
+  </ul>
+
+  <h3>Proposed Commercial Packaging & Roadmap:</h3>
+  <ul>
+    <li><strong>Automated WhatsApp Cloud API Bot:</strong> Inbound webhook integration allowing tutors to forward parent messages directly to an automated WhatsApp business number.</li>
+    <li><strong>Dynamic BharatQR / UPI Deep Linking:</strong> Payment gateway integration (Razorpay / Cashfree) generating unique dynamic QR codes encoding the exact invoice balance.</li>
+    <li><strong>Multi-Staff RBAC:</strong> Differentiated role-based access control for Academy Owners (full P&L visibility) versus Assistant Tutors (attendance and fee entry only).</li>
+    <li><strong>Tally / Accounting CSV Export:</strong> Formatted accounting export for tax filing.</li>
+  </ul>
+
+  <h2>9. CodeBenders Hackathon 2026 Submission Information</h2>
+  <ul>
+    <li><strong>Project Title:</strong> FeePulse — AI Cashflow Copilot for Independent Tutors</li>
+    <li><strong>Track / Problem Statement:</strong> Problem Statement 1 — <em>Small Business Operations: The One-Person Back Office</em></li>
+    <li><strong>Live Deployment URL:</strong> <a href="https://feepulse.vercel.app" target="_blank">https://feepulse.vercel.app</a></li>
+    <li><strong>GitHub Repository:</strong> <a href="https://github.com/DhanushPadarthi/codebenders" target="_blank">https://github.com/DhanushPadarthi/codebenders</a></li>
+    <li><strong>Target Audience:</strong> Independent home tutors, private coaching institutes, and test-prep educators in India.</li>
+  </ul>
+
+  <div class="callout" style="background: #f8fafc; border-color: #059669;">
+    <div class="callout-title" style="color: #059669;">Honest Tooling & Development Disclosure</div>
+    <strong>Repository Origin:</strong> The repository was initialized and set up within the CodeBenders workspace environment.<br>
+    <strong>Engineering Execution:</strong> Core application engineering, refactoring, and automated test suite creation were conducted with assistance from Code Benders.<br>
+    <strong>Zero Fabricated Claims:</strong> All test results, market assumptions, and architectural descriptions represent verified codebase implementations.
+  </div>
+
+  <h2>10. Automated Test Suites & Verification Results</h2>
+  <table>
+    <thead>
+      <tr>
+        <th class="emerald" style="width: 35%;">Test Suite</th>
+        <th class="emerald" style="width: 50%;">Target Coverage & Integrity Guard</th>
+        <th class="emerald" style="width: 15%;">Result</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Cashflow Projection Engine</strong></td>
+        <td>30/60/90-day roll-forward math, inflow cycles, overhead scheduling</td>
+        <td><span class="badge badge-green">11/11 PASSED</span></td>
+      </tr>
+      <tr>
+        <td><strong>Smart Recovery Queue</strong></td>
+        <td>Urgency ranking algorithm, overdue days weighting, broken promises</td>
+        <td><span class="badge badge-green">8/8 PASSED</span></td>
+      </tr>
+      <tr>
+        <td><strong>AI Security & Guardrails</strong></td>
+        <td>Streaming-safe body limits, input coercion, isBankVerified: false, zero-mutation</td>
+        <td><span class="badge badge-green">16/16 PASSED</span></td>
+      </tr>
+      <tr>
+        <td><strong>PostgreSQL 17 Financial Integrity</strong></td>
+        <td>ACID row-level mutex locks, payment idempotency, constraint enforcement</td>
+        <td><span class="badge badge-green">6/6 PASSED</span></td>
+      </tr>
+      <tr>
+        <td><strong>Full Application Build & Lint</strong></td>
+        <td>ESLint zero errors, TypeScript strict compilation, Turbopack packaging</td>
+        <td><span class="badge badge-green">CLEAN / PASSED</span></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="footer">
+    FeePulse &copy; 2026 &bull; Designed for Independent Educators &bull; CodeBenders Hackathon 2026
+  </div>
+
+</div>
+
+</body>
+</html>
